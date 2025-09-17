@@ -73,10 +73,19 @@
     });
 
     // 応答送信
-    function sendResponse(response) {
-      db.ref("race/response").push({
-        reply: response,
-        time: new Date().toISOString()
+    window.sendResponse = function(response) {
+  db.ref("race/response").push({
+    reply: response,
+    time: new Date().toISOString()
+  });
+};
+
+    //ーーーグローバルじゃなかった？？ーーー
+    //function sendResponse(response) {
+      //db.ref("race/response").push({
+        //reply: response,
+        //time: new Date().toISOString()
+    //ーーーーーーーーーーーーーーー
       });
     }
   </script>
