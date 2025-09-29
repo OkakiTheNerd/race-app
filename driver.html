@@ -82,10 +82,12 @@
 
 db.ref("race/message").on("value", snapshot => {
   const data = snapshot.val();
-  const msg = data?.text || "";
+  const msg = (data && typeof data.text === "string") ? data.text.trim() : "";
 
   const display = document.getElementById("messageDisplay");
-  if (msg.trim() === "") {
+  if (!display) return; // 要素が存在しない場合は何もしない
+
+  if (msg === "") {
     display.textContent = "メッセージ入力待ち";
     display.style.color = "gray";
   } else {
