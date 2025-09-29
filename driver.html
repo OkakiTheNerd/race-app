@@ -67,9 +67,11 @@
     const db = firebase.database();
 
     db.ref("race/message").on("value", snapshot => {
-  const data = snapshot.val();
-  if (data && data.text) {
-    displayMessage(data.text); // 画面に表示する関数
+    const data = snapshot.val();
+    if (data && data.text) {
+      displayMessage(data.text);
+    } else {
+      displayMessage("メッセージなし");// 画面に表示する関数
   }
 });
 
