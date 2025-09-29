@@ -37,6 +37,12 @@
   <button onclick="sendMessage()">送信</button>
   
   <div id="sendStatus" style="margin-top:10px; font-weight:bold; color:green;"></div>
+
+  
+  <h3>送信履歴</h3>
+  <ul id="sentMessageList"></ul>
+
+
   
   <h3>ドライバーからの応答</h3>
   <ul id="responseList"></ul>
@@ -79,12 +85,17 @@ function sendMessage() {
     .then(() => {
       status.textContent = "送信完了！";
       status.style.color = "green";
-      document.getElementById("messageInput").value = "";
+      //document.getElementById("messageInput").value = "";
+      //テキストボックスに送信したメッセージを残しておきたいため削除
     })
     .catch(error => {
       status.textContent = "送信失敗：" + error.message;
       status.style.color = "red";
     });
+    const li = document.createElement("li");
+    li.textContent = `${new Date().toLocaleTimeString()} - ${msg}`;
+    document.getElementById("sentMessageList").appendChild(li);
+    })
 }
 
 
