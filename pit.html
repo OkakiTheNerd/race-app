@@ -69,13 +69,42 @@
       .catch((error) => console.error("送信失敗:", error));
   }
 
-  // 応答受信
-  db.ref("race/response").on("child_added", snapshot => {
-    const data = snapshot.val();
-    const li = document.createElement("li");
-    li.textContent = `${new Date(data.time).toLocaleTimeString()} - ${data.reply}`;
-    document.getElementById("responseList").appendChild(li);
-  });
+
+// 応答受信ver2
+db.ref("race/response").on("child_added", snapshot => {
+  const data = snapshot.val();
+  const key = snapshot.key; // ← これが削除に必要！
+
+  const li = document.createElement("li");
+  li.textContent = `${new Date(data.time).toLocaleTimeString()} - ${data.reply}`;
+
+  // 削除ボタンを追加
+  const deleteBtn = document.createElement("button");
+  deleteBtn.textContent = "削除";
+  deleteBtn.style.marginLeft = "10px";
+  deleteBtn.onclick = () => {
+    db.ref("race/response/" + key).remove()
+      .then(() => li.remove())
+      .catch(err => console.error("削除失敗:", err));
+  };
+
+  li.appendChild(deleteBtn);
+  document.getElementById("responseList").appendChild(li);
+});
+
+
+
+
+  
+
+  
+  // 応答受信ver1
+  //db.ref("race/response").on("child_added", snapshot => {
+  //  const data = snapshot.val();
+  //  const li = document.createElement("li");
+  //  li.textContent = `${new Date(data.time).toLocaleTimeString()} - ${data.reply}`;
+  //  document.getElementById("responseList").appendChild(li);
+  //});
 </script>
 
 
