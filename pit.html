@@ -35,13 +35,12 @@
   <h2>ドライバーへのメッセージ</h2>
   <input type="text" id="messageInput" placeholder="メッセージを入力">
   <button onclick="sendMessage()">送信</button>
-  
+
   <div id="sendStatus" style="margin-top:10px; font-weight:bold; color:green;"></div>
 
   
   <h3>送信履歴</h3>
-  <ul id="sentMessageList"></ul>
-
+  <ul id="responseList"></ul>
 
   
   <h3>ドライバーからの応答</h3>
@@ -49,7 +48,7 @@
 
 
 
-    
+  
   <!-- Firebase SDK v8形式 -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
@@ -85,8 +84,7 @@ function sendMessage() {
     .then(() => {
       status.textContent = "送信完了！";
       status.style.color = "green";
-      //document.getElementById("messageInput").value = "";
-      //テキストボックスに送信したメッセージを残しておきたいため削除
+      //document.getElementById("messageInput").value = "";　　　テキストボックスに送信したメッセージを残しておきたいため削除
 
       const li = document.createElement("li");
       li.textContent = `${new Date().toLocaleTimeString()} - ${msg}`;
