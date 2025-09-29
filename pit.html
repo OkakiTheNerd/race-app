@@ -85,14 +85,22 @@
   const db = firebase.database();
 
 
-//// メッセージ送信 ver2
+//-------------メッセージ送信の場所------------------
+//// メッセージ送信ver2
 function sendMessage() {
   const msg = document.getElementById("messageInput").value;
   const status = document.getElementById("sendStatus");
 
   if (msg.trim() === "") {
-    status.textContent = "メッセージが空です";
-    status.style.color = "red";
+   db.ref("race/message").set({ text: "" })
+    .then(() => {
+      status.textContent = "メッセージ入力待ちを送信しました";
+      status.style.color = "orange";
+    })
+    .catch(error => {
+      status.textContent = "送信失敗：" + error.message;
+      status.style.color = "red";
+    });
     return;
   }
 
