@@ -54,8 +54,13 @@
   <h3>ドライバーからの応答</h3>
   <ul id="responseList"></ul>
 
+  <!--通知音ファイル-->
   <audio id="notifySound" src="notify.mp3" preload="auto"></audio>
 
+  <!--通知音のオンオフ切り替えボタン-->
+  <button onclick="toggleSound()">通知音：オン</button>
+
+  
   <!-- 音が出るかテスト-->
   <button onclick="document.getElementById('notifySound').play()">音を鳴らすテスト</button>
 
@@ -115,19 +120,18 @@ function sendMessage() {
       status.style.color = "red";
     });
 }
-
-
   
-
   
-  // メッセージ送信 ver1--
-  //function sendMessage() {
-  //  const msg = document.getElementById("messageInput").value;
-  //  db.ref("race/message").set({ text: msg })
-  //    .then(() => console.log("送信成功"))
-  //    .catch((error) => console.error("送信失敗:", error));
-  //}
+//--------------------応答に関する部分--------------------
 
+//通知音のオンオフについて
+let soundEnabled = true; // 初期状態：音オン
+
+  function toggleSound() {
+    soundEnabled = !soundEnabled;
+    const btn = event.target;
+    btn.textContent = soundEnabled ? "通知音：オン" : "通知音：オフ";
+  }  
 
 // 応答受信ver2 ->多分良さそう　形が悪い気がするが・・・
 db.ref("race/response").on("child_added", snapshot => {
@@ -152,22 +156,10 @@ db.ref("race/response").on("child_added", snapshot => {
 
   //通知音をならす
   const sound = document.getElementById("notifySound");
-  if (sound) sound.play();
+  if (soundEnabled && sound) sound.play();
 });
 
-
-
-
   
-
-  
-  // 応答受信ver1
-  //db.ref("race/response").on("child_added", snapshot => {
-  //  const data = snapshot.val();
-  //  const li = document.createElement("li");
-  //  li.textContent = `${new Date(data.time).toLocaleTimeString()} - ${data.reply}`;
-  //  document.getElementById("responseList").appendChild(li);
-  //});
 </script>
 
 
