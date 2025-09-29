@@ -32,7 +32,7 @@
   </style>
 </head>
 <body>
-  <h2>ドライバーへのメッセージ送信</h2>
+  <h2>ドライバーへのメッセージ送信1</h2>
   <input type="text" id="messageInput" placeholder="メッセージを入力">
   <button onclick="sendMessage()">送信</button>
 
@@ -79,35 +79,7 @@
 </script>
 
 
-    
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyCcNVldAlyQ7p7ZynrVzraZdiY3WCQCiP8",
-    authDomain: "race-app-76da9.firebaseapp.com",
-    databaseURL: "https://race-app-76da9-default-rtdb.firebaseio.com",
-    projectId: "race-app-76da9",
-    storageBucket: "race-app-76da9.firebasestorage.app",
-    messagingSenderId: "574674480250",
-    appId: "1:574674480250:web:6eba73435182cb053d1fc3"
-  };
-
-    // 初期化
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    // メッセージ送信
-    function sendMessage() {
-      const msg = document.getElementById("messageInput").value;
-      db.ref("race/message").set({ text: msg });
-    }
-
-    // 応答受信
-    db.ref("race/response").on("child_added", snapshot => {
-      const data = snapshot.val();
-      const li = document.createElement("li");
-      li.textContent = `${new Date(data.time).toLocaleTimeString()} - ${data.reply}`;
-      document.getElementById("responseList").appendChild(li);
-    });
+  
   </script>
 </body>
 </html>
