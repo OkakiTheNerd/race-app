@@ -39,6 +39,9 @@
   <h2>ピットからのメッセージ12</h2>
   <div id="messageDisplay">メッセージ待機中...</div>
 
+  
+　<div id="responseStatus" style="margin-top:10px; font-weight:bold; color:green;"></div>
+  
   <h3>応答ボタン</h3>
   <button onclick="sendResponse('了解')"> 了解</button>
   <button onclick="sendResponse('問題あり')"> 問題あり</button>
@@ -95,6 +98,26 @@
       reply: response,
       time: new Date().toISOString()
   });
+    window.sendResponse = function(response) {
+  const status = document.getElementById("responseStatus");
+
+  db.ref("race/response").push({
+    reply: response,
+    time: new Date().toISOString()
+  })
+  .then(() => {
+    status.textContent = "送信完了！";
+    status.style.color = "green";
+    setTimeout(() => {
+      status.textContent = "";
+    }, 3000); // 3秒後に消える
+  })
+  .catch(error => {
+    status.textContent = "送信失敗：" + error.message;
+    status.style.color = "red";
+  });
+};
+
 };
 
   </script>
