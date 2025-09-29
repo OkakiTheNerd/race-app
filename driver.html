@@ -80,15 +80,20 @@
     const db = firebase.database();
 
 
-    
-    db.ref("race/message").on("value", snapshot => {
-    const data = snapshot.val();
-    if (data && data.text) {
-      displayMessage(data.text);
-    } else {
-      displayMessage("メッセージなし");    
-    }
-  });
+db.ref("race/message").on("value", snapshot => {
+  const data = snapshot.val();
+  const msg = data?.text || "";
+
+  const display = document.getElementById("messageDisplay");
+  if (msg.trim() === "") {
+    display.textContent = "メッセージ入力待ち";
+    display.style.color = "gray";
+  } else {
+    display.textContent = msg;
+    display.style.color = "black";
+  }
+});
+
     // 画面に表示する関数
 
 
