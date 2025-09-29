@@ -59,7 +59,6 @@
 
   <!--通知音のオンオフ切り替えボタン-->
   <button onclick="toggleSound()">通知音：オン</button>
-
   
   <!-- 音が出るかテスト-->
   <button onclick="document.getElementById('notifySound').play()">音を鳴らすテスト</button>
@@ -132,7 +131,7 @@ function sendMessage() {
   
 //--------------------応答に関する部分--------------------
 
-//通知音のオンオフについて
+//通知音のオンオフ切り替え-----
 let soundEnabled = true; // 初期状態：音オン
 
   function toggleSound() {
@@ -149,7 +148,7 @@ db.ref("race/response").on("child_added", snapshot => {
   const li = document.createElement("li");
   li.textContent = `${new Date(data.time).toLocaleTimeString()} - ${data.reply}`;
 
-  // 削除ボタンを追加
+  // ------ドライバーからの応答されたメッセージの削除ボタンを追加-------
   const deleteBtn = document.createElement("button");
   deleteBtn.textContent = "削除";
   deleteBtn.style.marginLeft = "10px";
@@ -162,7 +161,7 @@ db.ref("race/response").on("child_added", snapshot => {
   li.appendChild(deleteBtn);
   document.getElementById("responseList").appendChild(li);
 
-  //通知音をならす
+  //---------通知音をならす--------
   const sound = document.getElementById("notifySound");
   if (soundEnabled && sound) sound.play();
 });
