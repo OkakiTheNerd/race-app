@@ -39,10 +39,47 @@
   <h3>ドライバーからの応答</h3>
   <ul id="responseList"></ul>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
-  <script>
+
+
+    
+  <!-- Firebase SDK v8形式 -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script>
+  // Firebase設定
+  const firebaseConfig = {
+    apiKey: "AIzaSyCcNVldAlyQ7p7ZynrVzraZdiY3WCQCiP8",
+    authDomain: "race-app-76da9.firebaseapp.com",
+    databaseURL: "https://race-app-76da9-default-rtdb.firebaseio.com",
+    projectId: "race-app-76da9",
+    storageBucket: "race-app-76da9.appspot.com",
+    messagingSenderId: "574674480250",
+    appId: "1:574674480250:web:6eba73435182cb053d1fc3"
+  };
+
+  // 初期化
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // メッセージ送信
+  function sendMessage() {
+    const msg = document.getElementById("messageInput").value;
+    db.ref("race/message").set({ text: msg })
+      .then(() => console.log("送信成功"))
+      .catch((error) => console.error("送信失敗:", error));
+  }
+
+  // 応答受信
+  db.ref("race/response").on("child_added", snapshot => {
+    const data = snapshot.val();
+    const li = document.createElement("li");
+    li.textContent = `${new Date(data.time).toLocaleTimeString()} - ${data.reply}`;
+    document.getElementById("responseList").appendChild(li);
+  });
+</script>
+
+
+    
   // Your web app's Firebase configuration
   const firebaseConfig = {
     apiKey: "AIzaSyCcNVldAlyQ7p7ZynrVzraZdiY3WCQCiP8",
