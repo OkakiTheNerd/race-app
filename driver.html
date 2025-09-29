@@ -80,40 +80,23 @@
     } else {
       displayMessage("メッセージなし");    
     }
+  });
     // 画面に表示する関数
 
 
-function displayMessage(message) {
+  function displayMessage(message) {
   document.getElementById("messageDisplay").innerText = message;
 }
 
-
-    
-    //---リアルタイムで動かないので下は違う??---
-    // メッセージ受信
-    //db.ref("race/message").on("value", snapshot => {
-    //  const msg = snapshot.val();
-    //  document.getElementById("messageDisplay").innerText = msg ? msg.text : "メッセージなし";
-    //});
-    //---------------------------------
-
     
     // 応答送信
-    window.sendResponse = function(response) {
-  db.ref("race/response").push({
-    reply: response,
-    time: new Date().toISOString()
+  window.sendResponse = function(response) {
+    db.ref("race/response").push({
+      reply: response,
+      time: new Date().toISOString()
   });
 };
 
-    //ーーーグローバルじゃなかった？？ーーー
-    //function sendResponse(response) {
-      //db.ref("race/response").push({
-        //reply: response,
-        //time: new Date().toISOString()
-    //ーーーーーーーーーーーーーーー
-     // });
-    }
   </script>
 </body>
 </html>
