@@ -78,10 +78,10 @@
     
     //---リアルタイムで動かないので下は違う??---
     // メッセージ受信
-    db.ref("race/message").on("value", snapshot => {
-      const msg = snapshot.val();
-      document.getElementById("messageDisplay").innerText = msg ? msg.text : "メッセージなし";
-    });
+    //db.ref("race/message").on("value", snapshot => {
+    //  const msg = snapshot.val();
+    //  document.getElementById("messageDisplay").innerText = msg ? msg.text : "メッセージなし";
+    //});
     //---------------------------------
 
     
