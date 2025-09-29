@@ -87,15 +87,15 @@ function sendMessage() {
       status.style.color = "green";
       //document.getElementById("messageInput").value = "";
       //テキストボックスに送信したメッセージを残しておきたいため削除
+
+      const li = document.createElement("li");
+      li.textContent = `${new Date().toLocaleTimeString()} - ${msg}`;
+      document.getElementById("sentMessageList").appendChild(li);
     })
     .catch(error => {
       status.textContent = "送信失敗：" + error.message;
       status.style.color = "red";
     });
-    const li = document.createElement("li");
-    li.textContent = `${new Date().toLocaleTimeString()} - ${msg}`;
-    document.getElementById("sentMessageList").appendChild(li);
-    })
 }
 
 
