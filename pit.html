@@ -40,7 +40,7 @@
   </style>
 </head>
 <body>
-  <h2>ドライバーへのメッセージ</h2>
+  <h2>ドライバーへのメッセージ1</h2>
   <input type="text" id="messageInput" placeholder="メッセージを入力">
   <button onclick="sendMessage()">送信</button>
 
@@ -56,6 +56,8 @@
 
   <audio id="notifySound" src="notify.mp3" preload="auto"></audio>
 
+  <!-- 音が出るかテスト-->
+  <button onclick="document.getElementById('notifySound').play()">音を鳴らすテスト</button>
 
   
   <!-- Firebase SDK v8形式 -->
