@@ -40,13 +40,16 @@
   <div id="messageDisplay">メッセージ待機中...</div>
 
   
-　<div id="responseStatus" style="margin-top:10px; font-weight:bold; color:green;"></div>
-  
+　
   <h3>応答ボタン</h3>
   <button onclick="sendResponse('了解')"> 了解</button>
   <button onclick="sendResponse('問題あり')"> 問題あり</button>
   <button onclick="sendResponse('ピットイン希望')"> ピットイン希望</button>
 
+  <div id="responseStatus" style="margin-top:10px; font-weight:bold; color:green;"></div>
+  
+  
+  
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
