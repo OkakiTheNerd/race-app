@@ -46,7 +46,7 @@
   <button onclick="sendResponse('問題あり')"> 問題あり</button>
   <button onclick="sendResponse('ピットイン希望')"> ピットイン希望</button>
 
-  <div id="responseStatus" style="margin-top:10px; font-weight:bold; color:green;"></div>
+  <div id="responseStatus" style="margin-top:14px; font-weight:bold; color:green;"></div>
   
   
   
@@ -113,7 +113,7 @@
     status.style.color = "green";
     setTimeout(() => {
       status.textContent = "";
-    }, 3000); // 3秒後に消える
+    }, 6000); // 3秒後に消える
   })
   .catch(error => {
     status.textContent = "送信失敗：" + error.message;
