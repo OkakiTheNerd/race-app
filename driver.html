@@ -66,12 +66,25 @@
     const app = firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    db.ref("race/message").on("value", snapshot => {
+  const data = snapshot.val();
+  if (data && data.text) {
+    displayMessage(data.text); // 画面に表示する関数
+  }
+});
+
+
+
+    
+    //---リアルタイムで動かないので下は違う??---
     // メッセージ受信
     db.ref("race/message").on("value", snapshot => {
       const msg = snapshot.val();
       document.getElementById("messageDisplay").innerText = msg ? msg.text : "メッセージなし";
     });
+    //---------------------------------
 
+    
     // 応答送信
     window.sendResponse = function(response) {
   db.ref("race/response").push({
