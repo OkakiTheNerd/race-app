@@ -61,16 +61,44 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
 
-  // メッセージ送信
-  function sendMessage() {
-    const msg = document.getElementById("messageInput").value;
-    db.ref("race/message").set({ text: msg })
-      .then(() => console.log("送信成功"))
-      .catch((error) => console.error("送信失敗:", error));
+
+//// メッセージ送信 ver2
+function sendMessage() {
+  const msg = document.getElementById("messageInput").value;
+  const status = document.getElementById("sendStatus");
+
+  if (msg.trim() === "") {
+    status.textContent = "メッセージが空です";
+    status.style.color = "red";
+    return;
   }
 
+  db.ref("race/message").set({ text: msg })
+    .then(() => {
+      status.textContent = "送信完了！";
+      status.style.color = "green";
+      document.getElementById("messageInput").value = "";
+    })
+    .catch(error => {
+      status.textContent = "送信失敗：" + error.message;
+      status.style.color = "red";
+    });
+}
 
-// 応答受信ver2
+
+  
+
+  
+  // メッセージ送信 ver1--
+  //function sendMessage() {
+  //  const msg = document.getElementById("messageInput").value;
+  //  db.ref("race/message").set({ text: msg })
+  //    .then(() => console.log("送信成功"))
+  //    .catch((error) => console.error("送信失敗:", error));
+  //}
+
+
+// 応答受信ver2 ->多分良さそう　形が悪い気がするが・・・
 db.ref("race/response").on("child_added", snapshot => {
   const data = snapshot.val();
   const key = snapshot.key; // ← これが削除に必要！
