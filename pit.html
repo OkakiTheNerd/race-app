@@ -91,6 +91,15 @@ function sendMessage() {
       const li = document.createElement("li");
       li.textContent = `${new Date().toLocaleTimeString()} - ${msg}`;
       document.getElementById("sentMessageList").appendChild(li);
+      const deleteBtn = document.createElement("button");
+      deleteBtn.textContent = "削除";
+      deleteBtn.style.marginLeft = "10px";
+      deleteBtn.onclick = () => {
+      li.remove(); // 画面から削除（Firebaseには影響なし）
+    };
+
+    li.appendChild(deleteBtn);
+    document.getElementById("sentMessageList").appendChild(li);
     })
     .catch(error => {
       status.textContent = "送信失敗：" + error.message;
@@ -114,7 +123,7 @@ function sendMessage() {
 // 応答受信ver2 ->多分良さそう　形が悪い気がするが・・・
 db.ref("race/response").on("child_added", snapshot => {
   const data = snapshot.val();
-  const key = snapshot.key; // ← これが削除に必要！
+  const key = snapshot.key; // ← これが削除に必要
 
   const li = document.createElement("li");
   li.textContent = `${new Date(data.time).toLocaleTimeString()} - ${data.reply}`;
