@@ -54,6 +54,7 @@
   <h3>ドライバーからの応答</h3>
   <ul id="responseList"></ul>
 
+  <audio id="notifySound" src="notify.mp3" preload="auto"></audio>
 
 
   
@@ -146,6 +147,10 @@ db.ref("race/response").on("child_added", snapshot => {
 
   li.appendChild(deleteBtn);
   document.getElementById("responseList").appendChild(li);
+
+  //通知音をならす
+  const sound = document.getElementById("notifySound");
+  if (sound) sound.play();
 });
 
 
