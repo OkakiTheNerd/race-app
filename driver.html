@@ -12,6 +12,7 @@
       background-color: #f9f9f9;
     }
     #messageDisplay {
+      /*
       font-size: 36px;　
       margin: 20px 0;
       padding: 10px;
@@ -19,6 +20,21 @@
       border-radius: 6px;
       background-color: #fff;
       min-hight: 150px;
+      */
+
+      font-size: 36px;
+      padding: 20px;
+      border: 2px solid #333;
+      border-radius: 8px;
+      background-color: #fff;
+      min-height: 3em;            /* 2行分の高さを確保 */
+      line-height: 1.5em;         /* 行間調整（2行で3em） */
+      display: flex;
+      align-items: center;        /* 垂直方向の中央揃え */
+      justify-content: center;    /* 水平方向の中央揃え */
+      text-align: center;
+      white-space: pre-wrap;      /* 改行や空白を保持して折り返し */
+      word-break: break-word;     /* 長い単語も折り返す */
     }
     button {
       font-size: 1.2em;
@@ -46,7 +62,7 @@
 
   
 　
-  <h3>応答ボタン4</h3>
+  <h3>応答ボタン5</h3>
   <button onclick="sendResponse('Yes')">Yes</button>
   <button onclick="sendResponse('No')">No</button>
   <button onclick="sendResponse('了解')"> 了解</button>
