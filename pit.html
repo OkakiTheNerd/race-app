@@ -25,15 +25,30 @@
       white-space: pre-wrap;
       word-break: break-word;
       resize: none; /* 高さ固定（必要なら） */
+
+      font-size: 36px;
+      padding: 20px;
+      border: 2px solid #333;
+      border-radius: 8px;
+      background-color: #fff;
+      min-height: 3em;            /* 2行分の高さを確保 */
+      line-height: 1.5em;         /* 行間調整（2行で3em） */
+      display: flex;
+      align-items: center;        /* 垂直方向の中央揃え */
+      justify-content: center;    /* 水平方向の中央揃え */
+      text-align: center;
+      white-space: pre-wrap;      /* 改行や空白を保持して折り返し */
+      word-break: break-word;     /* 長い単語も折り返す */
+
       
-      
+      /*-----これが動いているーーー
       font-size: 1.2em;
       padding: 10px;
       margin: 10px 0;
       width: 100%;
       max-width: 600px;
       height: 70px;
-      
+      ------------*/
     }
     button {
       font-size: 0.9em;
@@ -66,7 +81,7 @@
 </head>
 <body>
 
-  <h2>ドライバーへのメッセージ6</h2>
+  <h2>ドライバーへのメッセージ7</h2>
 
   <input type="text" id="messageInput" placeholder="メッセージを入力">
   
