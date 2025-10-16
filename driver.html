@@ -12,11 +12,11 @@
       background-color: #f9f9f9;
     }
     #messageDisplay {
-      font-size: 20px;
+      font-size: 26px;　
       margin: 20px 0;
-      padding: 15px;
+      padding: 10px;
       border: 2px solid #333;
-      border-radius: 8px;
+      border-radius: 6px;
       background-color: #fff;
     }
     button {
@@ -108,7 +108,7 @@ db.ref("race/message").on("value", snapshot => {
 }
 
     
-    // 応答送信
+    // 応答送信 なんか二重記載になってうるけど動いてるから今はそのままにしておく(20251016のかきの)
   window.sendResponse = function(response) {
     db.ref("race/response").push({
       reply: response,
@@ -126,7 +126,7 @@ db.ref("race/message").on("value", snapshot => {
     status.style.color = "green";
     setTimeout(() => {
       status.textContent = "";
-    }, 6000); // 3秒後に消える
+    }, 6000); // 6秒後に消える
   })
   .catch(error => {
     status.textContent = "送信失敗：" + error.message;
