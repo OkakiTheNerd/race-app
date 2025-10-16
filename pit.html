@@ -26,7 +26,7 @@
       word-break: break-word;
       resize: none; /* 高さ固定（必要なら） */
 
-      font-size: 36px;
+      font-size: 32px;
       padding: 20px;
       border: 2px solid #333;
       border-radius: 8px;
@@ -41,6 +41,8 @@
       word-break: break-word;     /* 長い単語も折り返す */
       width: 90%;
       max-width: 800px
+      
+      
 
       
       /*-----これが動いているーーー
@@ -83,7 +85,7 @@
 </head>
 <body>
 
-  <h2>ドライバーへのメッセージ1</h2>
+  <h2>ドライバーへのメッセージ2</h2>
 
   <input type="text" id="messageInput" placeholder="メッセージを入力">
   
@@ -132,7 +134,7 @@
 //-------------メッセージ送信の場所------------------
 //// メッセージ送信ver2
 function sendMessage() {
-  const msg = document.getElementById("messageInput").value;
+  const msg = document.getElementById("messageInput").innerText;
   const status = document.getElementById("sendStatus");
 
   if (msg.trim() === "") {
