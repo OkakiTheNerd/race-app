@@ -239,21 +239,25 @@ db.ref("race/response").on("child_added", snapshot => {
 
 
   document.getElementById("messageInput").addEventListener("input", function () {
-    const maxLines = 6;
-    const lines = this.innerText.split("\n");
+  const maxLines = 6;
 
-    if (lines.length > maxLines) {
-      this.innerText = lines.slice(0, maxLines).join("\n");
+  // <br> の数で行数を判断（+1行）
+  const lineCount = this.innerHTML.split("<br>").length;
 
-      // キャレットを末尾に移動
-      const range = document.createRange();
-      const sel = window.getSelection();
-      range.selectNodeContents(this);
-      range.collapse(false);
-      sel.removeAllRanges();
-      sel.addRange(range);
-    }
-  });
+  if (lineCount > maxLines) {
+    // テキストを行単位で分割して6行までに制限
+    const temp = this.innerText.split("\n").slice(0, maxLines).join("\n");
+    this.innerText = temp;
+
+    // キャレットを末尾に移動
+    const range = document.createRange();
+    const sel = window.getSelection();
+    range.selectNodeContents(this);
+    range.collapse(false);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+});
 
 
   
