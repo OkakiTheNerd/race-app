@@ -28,8 +28,9 @@
       white-space: pre-wrap;      /* 改行や空白を保持して折り返し */
       word-break: break-word;     /* 長い単語も折り返す */
       width: 900px;  　　　　　　/*横方向大きさ　画面の何パーセントまで広げるか*/
-      min-height: 270px;
-      max-height: 270px;            /* 2行分の高さを確保 */
+      height: 400px;
+      max-height: 500px;
+      overflow-y: auto;
       margin: 0 auto;
     }
 
@@ -97,7 +98,7 @@
   <!-- <h2 class="message-title">ピットからのメッセージ3</h2> -->
   <div id="messageDisplay">メッセージ待機中...</div>
 
-  <h3>応答ボタン4</h3>
+  <h3>応答ボタン5</h3>
   <div class="button-row">
     <button onclick="sendResponse('Yes')">Yes</button>
     <button onclick="sendResponse('No')">No</button>
