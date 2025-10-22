@@ -237,10 +237,7 @@ db.ref("race/response").on("child_added", snapshot => {
   if (soundEnabled && sound) sound.play();
 });
 
-<script>
-  // 既存の Firebase 初期化や sendMessage() などのコード…
 
-  // ✅ ここに追加（末尾に）
   document.getElementById("messageInput").addEventListener("input", function () {
     const maxLines = 6;
     const lines = this.innerText.split("\n");
@@ -257,11 +254,6 @@ db.ref("race/response").on("child_added", snapshot => {
       sel.addRange(range);
     }
   });
-
-
-
-  
-</script>
 
 
   
