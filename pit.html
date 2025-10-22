@@ -238,31 +238,44 @@ db.ref("race/response").on("child_added", snapshot => {
 });
 
   //メッセージ入力を4行に制限（タブレットで表示が4行が最大）
-  document.getElementById("messageInput").addEventListener("input", function () {
+ let isComposing = false;
+const inputBox = document.getElementById("messageInput");
+
+inputBox.addEventListener("compositionstart", () => {
+  isComposing = true;
+});
+
+inputBox.addEventListener("compositionend", () => {
+  isComposing = false;
+  enforceLineAndCharLimit(); // 変換確定後に制限処理
+});
+
+inputBox.addEventListener("input", () => {
+  if (!isComposing) {
+    enforceLineAndCharLimit();
+  }
+});
+
+function enforceLineAndCharLimit() {
   const maxLines = 5;
-  const maxCharsPerLine = 15; // ← ここで1行の最大文字数を設定
+  const maxCharsPerLine = 15;
 
-  let lines = this.innerText.split(/\r?\n/);
-
-  // 各行の文字数を制限
+  let lines = inputBox.innerText.split(/\r?\n/);
   lines = lines.map(line => line.slice(0, maxCharsPerLine));
-
-  // 行数も制限
   if (lines.length > maxLines) {
     lines = lines.slice(0, maxLines);
   }
 
-  // 内容を更新
-  this.innerText = lines.join("\n");
+  inputBox.innerText = lines.join("\n");
 
-  // キャレットを末尾に移動
   const range = document.createRange();
   const sel = window.getSelection();
-  range.selectNodeContents(this);
+  range.selectNodeContents(inputBox);
   range.collapse(false);
   sel.removeAllRanges();
   sel.addRange(range);
-});
+}
+
 
 
   
