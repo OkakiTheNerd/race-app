@@ -119,7 +119,7 @@
   <ul id="sentMessageList"></ul>
 
   
-  <h3>ドライバーからの応答</h3>
+  <h3>ドライバーからの応答1</h3>
   <ul id="responseList"></ul>
 
   <!--通知音ファイル-->
@@ -130,6 +130,9 @@
   
   <!-- 音が出るかテスト-->
   <button onclick="document.getElementById('notifySound').play()">音を鳴らすテスト</button>
+
+
+
 
   
   <!-- Firebase SDK v8形式 -->
@@ -233,6 +236,33 @@ db.ref("race/response").on("child_added", snapshot => {
   const sound = document.getElementById("notifySound");
   if (soundEnabled && sound) sound.play();
 });
+
+<script>
+  // 既存の Firebase 初期化や sendMessage() などのコード…
+
+  // ✅ ここに追加（末尾に）
+  document.getElementById("messageInput").addEventListener("input", function () {
+    const maxLines = 6;
+    const lines = this.innerText.split("\n");
+
+    if (lines.length > maxLines) {
+      this.innerText = lines.slice(0, maxLines).join("\n");
+
+      // キャレットを末尾に移動
+      const range = document.createRange();
+      const sel = window.getSelection();
+      range.selectNodeContents(this);
+      range.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+  });
+
+
+
+  
+</script>
+
 
   
 </script>
