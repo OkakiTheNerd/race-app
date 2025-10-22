@@ -238,7 +238,7 @@ db.ref("race/response").on("child_added", snapshot => {
 });
 
   //メッセージ入力を4行に制限（タブレットで表示が4行が最大）
- let isComposing = false;
+let isComposing = false;
 const inputBox = document.getElementById("messageInput");
 
 inputBox.addEventListener("compositionstart", () => {
@@ -247,7 +247,7 @@ inputBox.addEventListener("compositionstart", () => {
 
 inputBox.addEventListener("compositionend", () => {
   isComposing = false;
-  enforceLineAndCharLimit(); // 変換確定後に制限処理
+  setTimeout(enforceLineAndCharLimit, 0); // IME確定後に制限処理
 });
 
 inputBox.addEventListener("input", () => {
@@ -260,20 +260,30 @@ function enforceLineAndCharLimit() {
   const maxLines = 5;
   const maxCharsPerLine = 15;
 
-  let lines = inputBox.innerText.split(/\r?\n/);
+  const text = inputBox.innerText;
+  let lines = text.split(/\r?\n/);
+
+  // 各行の文字数を制限
   lines = lines.map(line => line.slice(0, maxCharsPerLine));
+
+  // 行数制限
   if (lines.length > maxLines) {
     lines = lines.slice(0, maxLines);
   }
 
-  inputBox.innerText = lines.join("\n");
+  // 変更が必要な場合のみ更新
+  const newText = lines.join("\n");
+  if (newText !== text) {
+    inputBox.innerText = newText;
 
-  const range = document.createRange();
-  const sel = window.getSelection();
-  range.selectNodeContents(inputBox);
-  range.collapse(false);
-  sel.removeAllRanges();
-  sel.addRange(range);
+    // キャレットを末尾に移動
+    const range = document.createRange();
+    const sel = window.getSelection();
+    range.selectNodeContents(inputBox);
+    range.collapse(false);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
 }
 
 
