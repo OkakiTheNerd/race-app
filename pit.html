@@ -240,7 +240,7 @@ db.ref("race/response").on("child_added", snapshot => {
   //メッセージ入力を4行に制限（タブレットで表示が4行が最大）
   document.getElementById("messageInput").addEventListener("input", function () {
   const maxLines = 5;
-  const maxCharsPerLine = 14; // ← ここで1行の最大文字数を設定
+  const maxCharsPerLine = 15; // ← ここで1行の最大文字数を設定
 
   let lines = this.innerText.split(/\r?\n/);
 
