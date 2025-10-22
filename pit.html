@@ -237,9 +237,9 @@ db.ref("race/response").on("child_added", snapshot => {
   if (soundEnabled && sound) sound.play();
 });
 
-  //メッセージ入力を６行に制限（タブレットで表示が６行が最大）
+  //メッセージ入力を4行に制限（タブレットで表示が4行が最大）
   document.getElementById("messageInput").addEventListener("input", function () {
-  const maxLines = 6;
+  const maxLines = 5;
 
   // innerText で改行をカウント（\nベース）
   const lines = this.innerText.split(/\r?\n/);
