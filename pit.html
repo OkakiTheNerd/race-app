@@ -237,17 +237,16 @@ db.ref("race/response").on("child_added", snapshot => {
   if (soundEnabled && sound) sound.play();
 });
 
-
+  //メッセージ入力を６行に制限（タブレットで表示が６行が最大）
   document.getElementById("messageInput").addEventListener("input", function () {
   const maxLines = 6;
 
-  // <br> の数で行数を判断（+1行）
-  const lineCount = this.innerHTML.split("<br>").length;
+  // innerText で改行をカウント（\nベース）
+  const lines = this.innerText.split(/\r?\n/);
 
-  if (lineCount > maxLines) {
-    // テキストを行単位で分割して6行までに制限
-    const temp = this.innerText.split("\n").slice(0, maxLines).join("\n");
-    this.innerText = temp;
+  if (lines.length > maxLines) {
+    // 6行までに制限
+    this.innerText = lines.slice(0, maxLines).join("\n");
 
     // キャレットを末尾に移動
     const range = document.createRange();
@@ -258,6 +257,7 @@ db.ref("race/response").on("child_added", snapshot => {
     sel.addRange(range);
   }
 });
+
 
 
   
