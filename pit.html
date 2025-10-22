@@ -151,7 +151,7 @@
 //-------------メッセージ送信の場所------------------
 //// メッセージ送信ver2
 function sendMessage() {
-  const msg = document.getElementById("messageInput").value;
+  const msg = document.getElementById("messageInput").innerText;
   const status = document.getElementById("sendStatus");
 
   if (msg.trim() === "") {
