@@ -240,26 +240,32 @@ db.ref("race/response").on("child_added", snapshot => {
   //メッセージ入力を4行に制限（タブレットで表示が4行が最大）
   document.getElementById("messageInput").addEventListener("input", function () {
   const maxLines = 5;
+  const maxCharsPerLine = 14; // ← ここで1行の最大文字数を設定
 
-  // innerText で改行をカウント（\nベース）
-  const lines = this.innerText.split(/\r?\n/);
+  let lines = this.innerText.split(/\r?\n/);
 
+  // 各行の文字数を制限
+  lines = lines.map(line => line.slice(0, maxCharsPerLine));
+
+  // 行数も制限
   if (lines.length > maxLines) {
-    // 6行までに制限
-    this.innerText = lines.slice(0, maxLines).join("\n");
-
-    // キャレットを末尾に移動
-    const range = document.createRange();
-    const sel = window.getSelection();
-    range.selectNodeContents(this);
-    range.collapse(false);
-    sel.removeAllRanges();
-    sel.addRange(range);
+    lines = lines.slice(0, maxLines);
   }
+
+  // 内容を更新
+  this.innerText = lines.join("\n");
+
+  // キャレットを末尾に移動
+  const range = document.createRange();
+  const sel = window.getSelection();
+  range.selectNodeContents(this);
+  range.collapse(false);
+  sel.removeAllRanges();
+  sel.addRange(range);
 });
 
 
-
+  
   
 </script>
 
