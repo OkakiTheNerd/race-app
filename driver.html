@@ -180,35 +180,6 @@ db.ref("race/message").on("value", snapshot => {
   document.getElementById("messageDisplay").innerText = message;
 }
 
-    
-    // 応答送信 なんか二重記載になってうるけど動いてるから今はそのままにしておく(20251016のかきの)
-  /*
-    window.sendResponse = function(response) {
-    db.ref("race/response").push({
-      reply: response,
-      time: new Date().toISOString()
-  });
-    window.sendResponse = function(response) {
-  const status = document.getElementById("responseStatus");
-
-  db.ref("race/response").push({
-    reply: response,
-    time: new Date().toISOString()
-  })
-  .then(() => {
-    status.textContent = "送信完了！";
-    status.style.color = "green";
-    setTimeout(() => {
-      status.textContent = "";
-    }, 6000); // 6秒後に消える
-  })
-  .catch(error => {
-    status.textContent = "送信失敗：" + error.message;
-    status.style.color = "red";
-  });
-};
-};
-*/
 
 window.sendResponse = function(response) {
   const status = document.getElementById("responseStatus");
@@ -279,6 +250,27 @@ document.getElementById("messageDisplay")
 
 });
 
+
+//GPS機能の部分
+navigator.geolocation.watchPosition(
+  function(position){
+
+    db.ref("race/gps").set({
+      lat: position.coords.latitude,
+      lng: position.coords.longitude,
+      speed: position.coords.speed,
+      timestamp: Date.now()
+    });
+
+  },
+  function(error){
+    console.error(error);
+  },
+  {
+    enableHighAccuracy: true,
+    maximumAge: 0
+  }
+);
 
     
   </script>
