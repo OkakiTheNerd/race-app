@@ -3,7 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
   <title>ピット画面</title>
+
+  <link
+   rel="stylesheet"
+   href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+　/>
+  
   <style>
     body {
       font-family: sans-serif;
@@ -101,6 +108,21 @@
       margin-bottom: 8px;
       font-size: 1em;
     }
+    
+    #gpsInfo{
+      font-size:18px;
+      font-weight:bold;
+      margin-top:10px;
+    }
+
+    #map{
+      width:100%;
+      height:700px;
+      margin-top:10px;
+      border:2px solid #333;
+      border-radius:8px;
+    }
+    
   </style>
 </head>
 <body>
@@ -138,6 +160,7 @@
   <!-- Firebase SDK v8形式 -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
   // Firebase設定
   const firebaseConfig = {
@@ -153,6 +176,30 @@
   // 初期化
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
+
+  // 地図作成
+  const map = L.map('map').setView(
+    [37.148, 140.696],
+    16
+  );
+  
+  L.tileLayer(
+    'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+    {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap'
+    }
+  ).addTo(map);
+  
+  const carMarker = L.circleMarker(
+    [37.148, 140.696],
+    {
+      radius: 10,
+      color: 'red',
+      fillColor: 'red',
+      fillOpacity: 1
+    }
+  ).addTo(map);
 
 
 //-------------メッセージ送信の場所------------------
@@ -286,14 +333,25 @@ function enforceLineAndCharLimit() {
   }
 }
 
+// GPS受信
+db.ref("race/gps").on("value", snapshot => {
 
+  const gps = snapshot.val();
 
-  
-  
+  if (!gps) return;
+
+  const lat = gps.lat;
+  const lng = gps.lng;
+
+  document.getElementById("gpsInfo").textContent =
+    `LAT:${lat.toFixed(6)} LNG:${lng.toFixed(6)}`;
+
+  carMarker.setLatLng([lat, lng]);
+
+  map.panTo([lat, lng]);
+
+});
+
 </script>
-
-
-  
-  </script>
 </body>
 </html>
