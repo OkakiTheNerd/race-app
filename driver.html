@@ -269,6 +269,15 @@ document.addEventListener("keydown", function(event){
 
 });
 
+// メッセージ欄タップで全画面表示
+document.getElementById("messageDisplay")
+  .addEventListener("click", function() {
+
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    }
+
+});
 
 
     
