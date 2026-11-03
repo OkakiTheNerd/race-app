@@ -126,6 +126,9 @@
   -->
   
   <div id="responseStatus" style="margin-top:14px; font-weight:bold; color:green;"></div>
+  <div id="gpsStatus" style="margin-top:8px; font-weight:bold; color:blue;">
+  GPS起動待ち...
+</div>
     
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -251,27 +254,72 @@ document.getElementById("messageDisplay")
 });
 
 
-//GPS機能の部分
-navigator.geolocation.watchPosition(
-  function(position){
+// GPS機能：Galaxy A25の内蔵GPSから取得してFirebaseへ送信
+let gpsWatchId = null;
 
-    db.ref("race/gps").set({
-      lat: position.coords.latitude,
-      lng: position.coords.longitude,
-      speed: position.coords.speed,
-      timestamp: Date.now()
-    });
+function startGps() {
+  const status = document.getElementById("gpsStatus");
 
-  },
-  function(error){
-    console.error(error);
-  },
-  {
-    enableHighAccuracy: true,
-    maximumAge: 0
+  if (!navigator.geolocation) {
+    status.textContent = "このブラウザーはGPSに対応していません";
+    status.style.color = "red";
+    return;
   }
-);
 
+  status.textContent = "GPS測位中...";
+  status.style.color = "blue";
+
+  gpsWatchId = navigator.geolocation.watchPosition(
+    function(position) {
+      const coords = position.coords;
+
+      db.ref("race/gps").set({
+        lat: coords.latitude,
+        lng: coords.longitude,
+        accuracy: coords.accuracy,
+        speed: coords.speed,
+        heading: coords.heading,
+        timestamp: Date.now()
+      })
+      .then(() => {
+        status.textContent =
+          "GPS送信中（精度：約" +
+          Math.round(coords.accuracy) + "m）";
+        status.style.color = "green";
+      })
+      .catch(error => {
+        status.textContent = "GPS送信失敗：" + error.message;
+        status.style.color = "red";
+      });
+    },
+
+    function(error) {
+      let message = "GPS取得エラー";
+
+      if (error.code === 1) {
+        message = "位置情報が許可されていません";
+      } else if (error.code === 2) {
+        message = "GPS位置を取得できません";
+      } else if (error.code === 3) {
+        message = "GPS取得がタイムアウトしました";
+      }
+
+      status.textContent = message;
+      status.style.color = "red";
+      console.error(message, error);
+    },
+
+    {
+      enableHighAccuracy: true,
+      maximumAge: 0,
+      timeout: 15000
+    }
+  );
+}
+
+startGps();
+
+    
     
   </script>
 </body>
