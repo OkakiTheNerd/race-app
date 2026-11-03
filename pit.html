@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f3f5f7">
-  <title>ピット画面1 - GPSモニター</title>
+  <meta name="theme-color" content="#090d12">
+  <title>ピット画面 - GPSモニター</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.3.0/dist/maplibre-gl.css">
   <style>
@@ -36,41 +36,162 @@
     .gps-value strong { display: block; margin-top: 3px; font-size: 17px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
     .hint { color: #5b6874; font-size: 13px; line-height: 1.55; }
     .map-error { padding: 12px; color: #9f241b; background: #fff0ed; border-radius: 8px; }
-    @media (max-width: 650px) {
-      body { padding: 8px; }
-      .panel { padding: 12px; }
-      #map { min-height: 360px; height: 60vh; }
-      #messageInput { min-height: 150px; }
+    .view-nav { position: sticky; top: 0; z-index: 1000; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; margin: 0 0 8px; padding: 8px 0; background: #f3f5f7; }
+    .view-nav button { width: 100%; min-width: 0; min-height: 34px; margin: 0; padding: 5px 6px; font-size: 13px; font-weight: 700; }
+    .view-nav button.active { color: white; background: #17212b; border-color: #17212b; }
+    .lap-screen[hidden], #mapView[hidden], #driverView[hidden], #messageView[hidden] { display: none; }
+    .race-overview { display: grid; grid-template-columns: minmax(320px, 0.9fr) minmax(0, 1.4fr); grid-template-rows: minmax(360px, auto); gap: 12px; align-items: stretch; }
+    .race-dashboard { grid-column: 1; grid-row: 1; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-content: stretch; }
+    .race-metric { min-width: 0; padding: 14px; color: #f8fafc; background: #17212b; border: 1px solid #344454; border-radius: 10px; }
+    .race-metric small { display: block; color: #aebdca; font-size: 12px; font-weight: 700; }
+    .race-metric strong { display: block; margin-top: 6px; font-size: clamp(21px, 3vw, 30px); font-variant-numeric: tabular-nums; }
+    .race-metric span { color: #aebdca; font-size: 11px; }
+    .lap-table-wrap { overflow-x: auto; }
+    .lap-table { width: 100%; min-width: 760px; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+    .lap-table th, .lap-table td { padding: 11px 9px; border-bottom: 1px solid #dce2e7; text-align: center; white-space: nowrap; }
+    .lap-table th { color: #eaf0f5; background: #263541; font-size: 12px; }
+    .lap-table td { background: #fff; }
+    .driver-summary { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+    .driver-summary th, .driver-summary td { padding: 10px 8px; border-bottom: 1px solid #dce2e7; text-align: center; }
+    .driver-summary th { background: #edf1f4; font-size: 12px; }
+    .metric-note { margin: 10px 0 0; color: #64717d; font-size: 12px; line-height: 1.5; }
+    .driver-roster { display: grid; grid-template-columns: 1fr; gap: 8px; margin: 10px 0; }
+    .driver-roster-head { display: flex; align-items: center; gap: 8px; padding: 0 8px; color: #91a0af; font-size: 12px; font-weight: 700; }
+    .driver-roster-head .driver-initial-heading { width: 72px; text-align: center; }
+    .driver-roster-head .driver-fuel-heading { width: 112px; text-align: center; }
+    .driver-roster-item { display: flex; align-items: center; gap: 8px; padding: 8px; background: #f5f7f9; border: 1px solid #dce2e7; border-radius: 8px; }
+    .driver-roster-item input { width: 72px; min-height: 38px; padding: 6px 8px; border: 1px solid #9aa7b3; border-radius: 6px; font-size: 16px; font-weight: 800; text-align: center; }
+    .driver-roster-item .fuel-economy-input { width: 112px; font-weight: 600; text-align: right; }
+    .driver-registration-status { min-width: 58px; color: #fbbf24; font-size: 12px; font-weight: 800; text-align: center; }
+    .driver-registration-status.registered { color: #6ee7b7; }
+    .driver-roster-item button.register-driver-button { margin-left: 0; background: #0e4658; border-color: #16849b; color: #e0f2fe; font-weight: 700; }
+    .driver-roster-item button { min-height: 34px; margin: 0 0 0 auto; padding: 4px 9px; font-size: 13px; }
+    #driverRosterStatus { min-height: 1.4em; color: #b42318; font-size: 13px; }
+    .race-course-panel { grid-column: 2; grid-row: 1; min-width: 0; margin: 0; padding: 12px; background: #090b0e; border: 1px solid #343b43; border-radius: 10px; color: #f3f4f6; }
+    .race-course-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .race-course-heading span { color: #ef4444; font-size: 11px; font-weight: 800; letter-spacing: .12em; }
+    #lapCourseFrame { display: block; width: 100%; height: 100%; min-height: 300px; border: 0; border-radius: 6px; background: #090b0e; }
+    .race-course-panel .hint { color: #9ca3af; margin-bottom: 0; }
+    @media (max-width: 700px) { .race-overview { grid-template-columns: 1fr; grid-template-rows: auto; } .race-dashboard, .race-course-panel { grid-column: 1; } .race-course-panel { grid-row: 1; } .race-dashboard { grid-row: 2; } #lapCourseFrame { height: 260px; min-height: 260px; } }
+    @media (max-width: 650px) { body { padding: 8px; } .panel { padding: 12px; } #map { min-height: 360px; height: 60vh; } #messageInput { min-height: 150px; } .race-dashboard { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    /* 全ページ共通：ブラック＆レーシングアクセント */
+    body { background: #090d12; color: #e8eef5; }
+    h1 { color: #f8fafc; letter-spacing: .04em; }
+    h2, h3 { color: #f1f5f9; }
+    .panel { background: #111820; border: 1px solid #293744; box-shadow: 0 8px 24px #0008; }
+    .hint, .metric-note { color: #91a0af; }
+    button, select { background: #202b36; color: #e8eef5; border-color: #435363; }
+    button:hover { background: #2b3947; border-color: #38bdf8; }
+    button:focus-visible, select:focus-visible { outline: 2px solid #38bdf8; outline-offset: 2px; }
+    button.primary { background: #087eae; border-color: #0ea5e9; color: #fff; }
+    button.primary:hover { background: #0b94c9; }
+    .view-nav { background: #090d12; border-bottom: 1px solid #263541; box-shadow: 0 8px 16px #0008; }
+    .view-nav button { background: #18232d; color: #aebdca; border-color: #344554; }
+    .view-nav button.active { background: #0e7490; color: #fff; border-color: #22d3ee; box-shadow: 0 0 12px #06b6d455; }
+    #messageInput { background: #080d12; color: #f8fafc; border-color: #425466; }
+    #messageInput:focus { border-color: #22d3ee; box-shadow: 0 0 0 3px #22d3ee30; }
+    #gpsStatus { background: #202b36; color: #cbd5e1; border: 1px solid #3b4b5a; }
+    #gpsStatus.received { background: #123329; color: #6ee7b7; border-color: #16845c; }
+    #gpsStatus.lost { background: #3b1d20; color: #fca5a5; border-color: #b45353; }
+    .gps-value, .driver-roster-item { background: #18232d; border-color: #344554; color: #e8eef5; }
+    .gps-value small { color: #91a0af; }
+    .gps-value strong { color: #f8fafc; }
+    .driver-roster-item input { background: #090f15; color: #f8fafc; border-color: #435363; }
+    #driverRosterStatus { color: #fca5a5; }
+    .race-metric { background: linear-gradient(145deg, #17232e, #0c131a); border-color: #34495a; box-shadow: inset 0 1px #ffffff0a; }
+    .race-metric strong { color: #67e8f9; }
+    .race-course-panel { background: #05080b; border-color: #344554; }
+    .lap-table th { color: #eaf7ff; background: #1b3444; }
+    .lap-table td, .driver-summary td { background: #131d26; color: #dce6ef; border-bottom-color: #2b3946; }
+    .driver-summary th { background: #202d38; color: #eaf0f5; border-bottom-color: #3a4a58; }
+    .map-error { background: #3b1d20; color: #fca5a5; }
+    #map { border-color: #344554; }
+    .leaflet-bar a, .leaflet-bar a:hover { background: #17232e; color: #e8eef5; border-bottom-color: #344554; }
+    .leaflet-control-attribution { background: #0b1118cc !important; color: #aebdca !important; }
+    .leaflet-control-attribution a { color: #67e8f9 !important; }
+    /* 全ページ共通：囲い線を細く、控えめに統一 */
+    .panel, .race-metric, .gps-value, .driver-roster-item, .race-course-panel,
+    #map, #messageInput, .driver-roster-item input, button, select, #gpsStatus {
+      border-width: 1px;
+      border-color: #263440;
     }
+    .view-nav button.active { border-color: #16849b; }
+    #messageInput:focus { border-color: #22d3ee; }
+    .message-panel-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+    .message-panel-heading h2 { margin: 0; }
+    .sound-controls { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
+    .sound-controls button { min-height: 28px; margin: 0; padding: 3px 8px; font-size: 11px; }
+    .message-compose-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(360px, 420px); gap: 14px; align-items: start; }
+    .message-compose-main { min-width: 0; }
+    .quick-message-panel { min-width: 0; height: 190px; padding: 8px; display: flex; flex-direction: column; border: 1px solid #263440; border-radius: 10px; background: #0d141b; }
+    .quick-message-heading { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-shrink: 0; margin: 0 0 6px; color: #cbd5e1; font-size: 11px; }
+    .quick-message-heading button { min-height: 25px; margin: 0; padding: 2px 7px; font-size: 10px; }
+    .quick-message-list { display: flex; flex: 1; min-height: 0; flex-direction: column; gap: 4px; overflow-y: auto; }
+    .quick-message-button { min-height: 27px; flex-shrink: 0; width: 100%; margin: 0; padding: 4px 8px; border-color: #315064; background: #172936; color: #e0f2fe; font-size: 11px; font-weight: 700; text-align: center; }
+    .quick-message-button:hover { background: #1c4052; border-color: #22d3ee; }
+    .quick-message-button.selected { background: #0e4658; border: 2px solid #22d3ee; box-shadow: inset 0 0 0 1px #22d3ee55; color: #fff; }
+    .quick-message-button.custom { position: relative; padding-right: 28px; }
+    .quick-message-selection-status { flex-shrink: 0; margin: 4px 0 0; font-size: 10px; line-height: 1.25; }
+    .quick-message-remove { position: absolute; top: 2px; right: 3px; min-height: 22px; width: 22px; margin: 0; padding: 0; border: 0; background: transparent; color: #91a0af; font-size: 15px; }
+    .message-conversations { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: start; }
+    .conversation-panel { min-width: 0; margin: 0; }
+    .conversation-panel h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; padding-bottom: 9px; border-bottom: 1px solid #263440; }
+    .conversation-panel h3::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #22d3ee; }
+    .conversation-panel.driver-replies h3::before { background: #4ade80; }
+    .conversation-list { display: flex; flex-direction: column; gap: 9px; max-height: 440px; overflow-y: auto; padding: 4px 8px 4px 0; margin: 0; list-style: none; }
+    .conversation-list li { position: relative; margin: 0; padding: 11px 13px; border: 1px solid #263440; border-radius: 10px; background: #18232d; overflow-wrap: anywhere; white-space: pre-wrap; }
+    .conversation-list .message-meta { display: block; margin-bottom: 5px; color: #91a0af; font-size: 11px; }
+    .conversation-list .message-body { display: block; color: #f1f5f9; line-height: 1.5; }
+    .conversation-list .history-delete { float: right; margin: -3px -5px 3px 8px; }
+    .conversation-empty { color: #91a0af; font-size: 13px; padding: 12px 4px; }
+    @media (max-width: 900px) { .message-conversations { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
 <main>
   <h1>ピット画面</h1>
 
-  <section class="panel">
-    <h2>ドライバーへのメッセージ（4行まで・1行15文字）</h2>
-    <div id="messageInput" contenteditable="true" role="textbox" aria-label="ドライバーへのメッセージ" aria-multiline="true"></div>
-    <div>
-      <button class="primary" id="sendButton" type="button">送信</button>
-      <span id="sendStatus" aria-live="polite"></span>
-    </div>
-    <h3>送信履歴</h3>
-    <ul id="sentMessageList"></ul>
-  </section>
+  <nav class="view-nav" aria-label="画面切り替え">
+    <button type="button" id="showMessageButton" aria-pressed="false">メッセージ送信</button>
+    <button type="button" id="showLapButton" aria-pressed="false">ラップ管理・チーム成績</button>
+    <button type="button" id="showDriverButton" aria-pressed="false">ドライバー登録</button>
+    <button type="button" class="active" id="showMapButton" aria-pressed="true">地図・GPS</button>
+  </nav>
 
+  <div id="messageView" hidden>
   <section class="panel">
-    <h2>ドライバーからの応答</h2>
-    <ul id="responseList"></ul>
+    <div class="message-panel-heading">
+      <h2>ドライバーへのメッセージ（4行まで・1行15文字）</h2>
+      <div class="sound-controls" aria-label="通知音設定">
+        <button id="soundButton" type="button">通知音：オン</button>
+        <button id="testSoundButton" type="button">音を鳴らすテスト</button>
+      </div>
+    </div>
+    <div class="message-compose-grid">
+      <div class="message-compose-main">
+        <div id="messageInput" contenteditable="true" role="textbox" aria-label="ドライバーへのメッセージ" aria-multiline="true"></div>
+        <div><button class="primary" id="sendButton" type="button">送信</button><button id="clearMessageButton" type="button">メッセージクリア</button><span id="sendStatus" aria-live="polite"></span></div>
+      </div>
+      <aside class="quick-message-panel" aria-label="定型メッセージ">
+        <div class="quick-message-heading"><strong>定型メッセージ（選択して送信）</strong><button type="button" id="addQuickMessageButton">＋ 追加</button></div>
+        <div id="quickMessageList" class="quick-message-list"></div>
+      </aside>
+    </div>
+    <div class="message-conversations">
+      <section class="panel conversation-panel pit-messages">
+        <h3>ピットから送信したメッセージ</h3>
+        <ul id="sentMessageList" class="conversation-list"><li class="conversation-empty">送信履歴はまだありません</li></ul>
+      </section>
+      <section class="panel conversation-panel driver-replies">
+        <h3>ドライバーからの返信</h3>
+        <ul id="responseList" class="conversation-list"><li class="conversation-empty">ドライバーからの返信待ち</li></ul>
+      </section>
+    </div>
     <audio id="notifySound" src="notify.mp3" preload="auto"></audio>
-    <div>
-      <button id="soundButton" type="button">通知音：オン</button>
-      <button id="testSoundButton" type="button">音を鳴らすテスト</button>
-    </div>
     <p class="hint">通知音を使う場合は notify.mp3 をHTMLと同じフォルダーに置いてください。ブラウザーで最初に操作した後に再生できます。</p>
-  </section>
+  </div>
 
-  <section class="panel">
+  <section class="panel" id="mapView">
     <h2>ドライバーGPS・コースマップ</h2>
     <div class="map-toolbar">
       <label for="circuitSelect">サーキット</label>
@@ -78,50 +199,84 @@
         <option value="ebisu">エビス東コース</option>
         <option value="tsukuba">筑波サーキット（コース2000）</option>
       </select>
-
       <button id="followButton" type="button">自動追従：オン</button>
       <button id="returnButton" type="button">車両位置へ戻る</button>
-
-      <!-- 走行軌跡オン・オフスイッチ -->
       <button id="routeToggleButton" type="button">走行軌跡：オン</button>
-
-      <!-- 走行軌跡クリア -->
       <button id="clearRouteButton" type="button">走行軌跡をクリア</button>
     </div>
-
     <div id="gpsStatus" role="status" aria-live="polite">GPS受信待ち</div>
-
     <div class="gps-grid">
-      <div class="gps-value">
-        <small>緯度</small>
-        <strong id="gpsLat">---</strong>
-      </div>
-      <div class="gps-value">
-        <small>経度</small>
-        <strong id="gpsLng">---</strong>
-      </div>
-      <div class="gps-value">
-        <small>測位精度</small>
-        <strong id="gpsAccuracy">---</strong>
-      </div>
-      <div class="gps-value">
-        <small>最終受信</small>
-        <strong id="gpsReceivedAt">---</strong>
-      </div>
+      <div class="gps-value"><small>緯度</small><strong id="gpsLat">---</strong></div>
+      <div class="gps-value"><small>経度</small><strong id="gpsLng">---</strong></div>
+      <div class="gps-value"><small>測位精度</small><strong id="gpsAccuracy">---</strong></div>
+      <div class="gps-value"><small>最終受信</small><strong id="gpsReceivedAt">---</strong></div>
     </div>
-
     <div id="map" aria-label="車両GPS位置マップ"></div>
-
     <p class="hint">地図：OpenFreeMap Liberty / OpenMapTiles / OpenStreetMap。地図表示にはインターネット接続が必要です。OpenFreeMapの公開インスタンスは無料ですが、稼働保証（SLA）はありません。</p>
     <p id="mapError" class="map-error" hidden></p>
   </section>
+
+  <section class="panel lap-screen" id="lapView" hidden>
+    <h2>ENDURANCE LIVE TIMING</h2>
+    <p class="hint">チーム全体のレース状況とドライバー別成績。GPSラップ計測・燃料記録との連携欄です。</p>
+    <div class="race-overview">
+      <div class="race-course-panel" aria-label="選択中サーキットのコース図">
+        <div class="race-course-heading"><strong id="lapCircuitName">エビス東コース</strong><span>LIVE GPS</span></div>
+        <iframe id="lapCourseFrame" title="公式コース図" src="https://www.ebisu-circuit.com/c-images/higashi.pdf"></iframe>
+        <p class="hint">公式配布のコース図を表示しています。GPSマーカーの重ね合わせは、図面と緯度・経度の位置合わせを確認してから追加します。</p>
+      </div>
+      <div class="race-dashboard" aria-label="チーム総合成績">
+      <div class="race-metric"><small>チーム平均ラップ</small><strong id="teamAverageLap">---</strong><span>全有効ラップの平均</span></div>
+      <div class="race-metric"><small>チームベストラップ</small><strong id="teamBestLap">---</strong><span>最速ラップ</span></div>
+      <div class="race-metric"><small>平均燃費</small><strong id="teamFuelAverage">---</strong><span>km / L</span></div>
+      <div class="race-metric"><small>推定残り走行可能周回数</small><strong id="remainingLaps">---</strong><span>燃料残 × km/L ÷ コース距離</span></div>
+      <div class="race-metric"><small>レース残り時間</small><strong id="raceTimeRemaining">---</strong><span>設定したレース終了時刻まで</span></div>
+      </div>
+    </div>
+
+    <h3>ドライバー別成績</h3>
+    <p class="hint">同じドライバーが複数回走行した場合も、スティントごとに別々に集計します。チーム成績には全員の全スティントを含めます。</p>
+    <div class="lap-table-wrap">
+      <table class="driver-summary">
+        <thead><tr><th>ドライバー</th><th>平均ラップ</th><th>走行周回数</th><th>走行時間</th><th>ベストラップ</th></tr></thead>
+        <tbody id="driverSummaryBody">
+          <tr><td>D01</td><td>---</td><td>---</td><td>---</td><td>---</td></tr>
+          <tr><td>D02</td><td>---</td><td>---</td><td>---</td><td>---</td></tr>
+          <tr><td>D03</td><td>---</td><td>---</td><td>---</td><td>---</td></tr>
+          <tr><td>D04</td><td>---</td><td>---</td><td>---</td><td>---</td></tr>
+          <tr><td>D05</td><td>---</td><td>---</td><td>---</td><td>---</td></tr>
+          <tr><td>D06</td><td>---</td><td>---</td><td>---</td><td>---</td></tr>
+          <tr><td>D07</td><td>---</td><td>---</td><td>---</td><td>---</td></tr>
+          <tr><td>D08</td><td>---</td><td>---</td><td>---</td><td>---</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3>ラップ履歴</h3>
+    <div class="lap-table-wrap">
+      <table class="lap-table">
+        <thead><tr><th>周回数</th><th>タイム</th><th>ドライバー</th><th>ピットイン</th><th>タイヤ交換</th><th>給油量</th><th>燃料残</th></tr></thead>
+        <tbody id="lapHistoryBody"><tr><td colspan="7">ラップデータ待ち</td></tr></tbody>
+      </table>
+    </div>
+    <p class="metric-note">※現在は成績表示エリアの追加段階です。数値はラップ自動計測・給油記録・レース開始設定との接続後に集計されます。燃料残は自動推定値を手動修正できる設計にします。</p>
+  </section>
+
+  <section class="panel" id="driverView" hidden>
+    <h2>レース前ドライバー登録</h2>
+    <p class="hint">初期8名。イニシャルとドライバー別の推定燃費（km/L）を登録できます。人数も追加・削除でき、登録内容はこのブラウザーに保存されます。</p>
+    <div class="driver-roster-head" aria-hidden="true"><span>ドライバー</span><span class="driver-initial-heading">イニシャル</span><span class="driver-fuel-heading">推定燃費 km/L</span></div>
+    <div id="driverRoster" class="driver-roster" aria-label="ドライバー登録一覧"></div>
+    <button type="button" id="addDriverButton">＋ ドライバー追加</button>
+    <span id="driverRosterStatus" role="status" aria-live="polite"></span>
+  </section>
 </main>
 
-<!-- Firebase -->
+<!-- 元のFirebase設定・Realtime Databaseを継続利用 -->
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-<!-- LeafletとMapLibre GL -->
+<!-- LeafletとMapLibre GL Leaflet連携のブラウザー用ESM設定 -->
 <script type="importmap">
 {
   "imports": {
@@ -136,7 +291,6 @@
   import { maplibreGL } from "https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/dist/leaflet-maplibre-gl.mjs";
 
   const firebase = window.firebase;
-
   const firebaseConfig = {
     apiKey: "AIzaSyCcNVldAlyQ7p7ZynrVzraZdiY3WCQCi8P",
     authDomain: "race-app-76da9.firebaseapp.com",
@@ -148,35 +302,157 @@
   };
 
   const circuits = {
-    ebisu: {
-      name: "エビス東コース",
-      center: [37.644224, 140.372278],
-      zoom: 16
-    },
-    tsukuba: {
-      name: "筑波サーキット（コース2000）",
-      center: [36.150845, 139.919699],
-      zoom: 16
-    }
+    ebisu: { name: "エビス東コース", center: [37.644224, 140.372278], zoom: 16, courseMap: "https://www.ebisu-circuit.com/c-images/higashi.pdf" },
+    tsukuba: { name: "筑波サーキット（コース2000）", center: [36.150845, 139.919699], zoom: 16, courseMap: "https://www.tsukuba-circuit.jp/guide/img/guidemap2000.jpg?26=" }
   };
 
   let db = null;
   let soundEnabled = true;
   let followEnabled = true;
-
-  // 走行軌跡の記録状態
   let routeRecordingEnabled = true;
-
   let currentLatLng = null;
   let lastGpsTime = null;
   let gpsHistory = [];
-
   const MAX_HISTORY = 1200;
   const GPS_TIMEOUT_MS = 15000;
 
-  const mapError = document.getElementById("mapError");
+  // レース前のドライバー登録（ブラウザー単位で保存）
+  const DRIVER_STORAGE_KEY = "endurancePitDrivers_v1";
+  const driverRoster = document.getElementById("driverRoster");
+  const driverRosterStatus = document.getElementById("driverRosterStatus");
+  function createDriverId() {
+    return window.crypto && crypto.randomUUID ? crypto.randomUUID() : `driver-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
+  function loadDrivers() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(DRIVER_STORAGE_KEY) || "null");
+      if (Array.isArray(saved) && saved.length) return saved.filter(item => item && typeof item.id === "string" && typeof item.initial === "string").map(item => ({ ...item, registered: item.registered === true, fuelEconomy: Number.isFinite(Number(item.fuelEconomy)) && item.fuelEconomy !== "" && item.fuelEconomy != null ? Math.max(0, Number(item.fuelEconomy)) : "" }));
+    } catch (error) { console.warn("ドライバー登録の読み込みに失敗:", error); }
+    return Array.from({ length: 8 }, (_, index) => ({ id: createDriverId(), initial: String.fromCharCode(65 + index) }));
+  }
+  let drivers = loadDrivers();
+  function saveDrivers() {
+    try {
+      localStorage.setItem(DRIVER_STORAGE_KEY, JSON.stringify(drivers));
+      driverRosterStatus.textContent = "保存しました";
+    } catch (error) {
+      driverRosterStatus.textContent = "保存できません。ブラウザーの保存設定を確認してください。";
+    }
+  }
+  function renderDrivers() {
+    driverRoster.replaceChildren();
+    drivers.forEach((driver, index) => {
+      const item = document.createElement("div");
+      item.className = "driver-roster-item";
+      const label = document.createElement("label");
+      label.textContent = `ドライバー ${index + 1}`;
+      const input = document.createElement("input");
+      input.type = "text";
+      input.maxLength = 5;
+      input.value = driver.initial;
+      input.setAttribute("aria-label", `ドライバー ${index + 1} のイニシャル`);
+      const fuelInput = document.createElement("input");
+      fuelInput.className = "fuel-economy-input";
+      fuelInput.type = "number";
+      fuelInput.min = "0";
+      fuelInput.step = "0.1";
+      fuelInput.inputMode = "decimal";
+      fuelInput.placeholder = "未設定";
+      fuelInput.value = driver.fuelEconomy === "" || driver.fuelEconomy == null ? "" : String(driver.fuelEconomy);
+      fuelInput.setAttribute("aria-label", `ドライバー ${index + 1} の推定燃費（km/L）`);
+      const registrationStatus = document.createElement("span");
+      registrationStatus.className = "driver-registration-status" + (driver.registered ? " registered" : "");
+      registrationStatus.textContent = driver.registered ? "登録済" : "未登録";
+      registrationStatus.setAttribute("aria-label", registrationStatus.textContent);
+      const register = document.createElement("button");
+      register.type = "button";
+      register.className = "register-driver-button";
+      register.textContent = driver.registered ? "更新登録" : "登録";
+      register.addEventListener("click", () => {
+        const nextInitial = input.value.trim().toUpperCase();
+        const rawFuel = fuelInput.value.trim();
+        if (!nextInitial || !rawFuel) {
+          driverRosterStatus.textContent = `ドライバー ${index + 1}：イニシャルと推定燃費を入力してください。`;
+          return;
+        }
+        if (drivers.some(other => other.id !== driver.id && other.initial.toUpperCase() === nextInitial)) {
+          driverRosterStatus.textContent = "同じイニシャルは登録できません。";
+          return;
+        }
+        const nextFuel = Number(rawFuel);
+        if (!Number.isFinite(nextFuel) || nextFuel < 0) {
+          driverRosterStatus.textContent = "推定燃費は0以上の数値で入力してください。";
+          return;
+        }
+        driver.initial = nextInitial;
+        driver.fuelEconomy = nextFuel;
+        driver.registered = true;
+        saveDrivers();
+        renderDrivers();
+      });
+      input.addEventListener("input", () => {
+        driver.registered = false;
+        registrationStatus.textContent = "未登録";
+        registrationStatus.classList.remove("registered");
+        register.textContent = "登録";
+      });
+      fuelInput.addEventListener("input", () => {
+        driver.registered = false;
+        registrationStatus.textContent = "未登録";
+        registrationStatus.classList.remove("registered");
+        register.textContent = "登録";
+      });
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.textContent = "削除";
+      remove.disabled = drivers.length <= 1;
+      remove.addEventListener("click", () => {
+        if (drivers.length <= 1) return;
+        drivers = drivers.filter(other => other.id !== driver.id);
+        saveDrivers();
+        renderDrivers();
+      });
+      item.append(label, input, fuelInput, registrationStatus, register, remove);
+      driverRoster.appendChild(item);
+    });
+  }
+  document.getElementById("addDriverButton").addEventListener("click", () => {
+    let suffix = drivers.length + 1;
+    let initial = `D${suffix}`;
+    while (drivers.some(driver => driver.initial.toUpperCase() === initial.toUpperCase())) initial = `D${++suffix}`;
+    drivers.push({ id: createDriverId(), initial, fuelEconomy: "", registered: false });
+    saveDrivers();
+    renderDrivers();
+  });
+  renderDrivers();
 
-  // 地図初期化
+  // 地図画面とラップ管理画面の切り替え
+  const mapView = document.getElementById("mapView");
+  const lapView = document.getElementById("lapView");
+  const driverView = document.getElementById("driverView");
+  const messageView = document.getElementById("messageView");
+  function setMainView(view) {
+    mapView.hidden = view !== "map";
+    lapView.hidden = view !== "lap";
+    driverView.hidden = view !== "drivers";
+    messageView.hidden = view !== "message";
+    [["showMapButton", "map"], ["showLapButton", "lap"], ["showDriverButton", "drivers"], ["showMessageButton", "message"]].forEach(([id, name]) => {
+      const active = name === view;
+      document.getElementById(id).classList.toggle("active", active);
+      document.getElementById(id).setAttribute("aria-pressed", String(active));
+    });
+    if (view === "map") setTimeout(() => map.invalidateSize(), 100);
+  }
+  document.getElementById("showMapButton").addEventListener("click", () => {
+    setMainView("map");
+  });
+  document.getElementById("showLapButton").addEventListener("click", () => {
+    setMainView("lap");
+  });
+  document.getElementById("showDriverButton").addEventListener("click", () => setMainView("drivers"));
+  document.getElementById("showMessageButton").addEventListener("click", () => setMainView("message"));
+
+  const mapError = document.getElementById("mapError");
   const map = L.map("map", {
     zoomControl: true,
     preferCanvas: true,
@@ -195,179 +471,205 @@
     mapError.textContent = "地図を初期化できませんでした。インターネット接続とCDNへのアクセスを確認してください。";
   }
 
-  // 車両マーカー
   const carMarker = L.circleMarker(circuits.ebisu.center, {
-    radius: 10,
-    color: "#fff",
-    weight: 3,
-    fillColor: "#e11d48",
-    fillOpacity: 1
-  }).addTo(map).bindTooltip("ドライバー位置", {
-    direction: "top"
-  });
+    radius: 10, color: "#fff", weight: 3, fillColor: "#e11d48", fillOpacity: 1
+  }).addTo(map).bindTooltip("ドライバー位置", { direction: "top" });
 
-  // GPS精度円
   const accuracyCircle = L.circle(circuits.ebisu.center, {
-    radius: 0,
-    color: "#2563eb",
-    weight: 1,
-    fillColor: "#3b82f6",
-    fillOpacity: 0.12
+    radius: 0, color: "#2563eb", weight: 1, fillColor: "#3b82f6", fillOpacity: 0.12
   }).addTo(map);
 
-  // 走行軌跡ライン
   const routeLine = L.polyline([], {
-    color: "#e11d48",
-    weight: 4,
-    opacity: 0.85,
-    lineCap: "round",
-    lineJoin: "round"
+    color: "#e11d48", weight: 4, opacity: 0.85, lineCap: "round", lineJoin: "round"
   }).addTo(map);
 
-  // サーキット切り替え
   document.getElementById("circuitSelect").addEventListener("change", event => {
     const circuit = circuits[event.target.value];
     if (!circuit) return;
-
     map.setView(circuit.center, circuit.zoom);
-
-    if (followEnabled && currentLatLng) {
-      map.panTo(currentLatLng);
-    }
+    document.getElementById("lapCourseFrame").src = circuit.courseMap;
+    document.getElementById("lapCircuitName").textContent = circuit.name;
+    if (followEnabled && currentLatLng) map.panTo(currentLatLng);
   });
 
-  // 自動追従オン・オフ
   document.getElementById("followButton").addEventListener("click", () => {
     followEnabled = !followEnabled;
-
-    document.getElementById("followButton").textContent =
-      followEnabled ? "自動追従：オン" : "自動追従：オフ";
-
-    if (followEnabled && currentLatLng) {
-      map.panTo(currentLatLng);
-    }
+    document.getElementById("followButton").textContent = followEnabled ? "自動追従：オン" : "自動追従：オフ";
+    if (followEnabled && currentLatLng) map.panTo(currentLatLng);
   });
 
-  // 車両位置へ戻る
   document.getElementById("returnButton").addEventListener("click", () => {
-    if (!currentLatLng) {
-      return alert("まだGPSを受信していません。");
-    }
-
+    if (!currentLatLng) return alert("まだGPSを受信していません。");
     followEnabled = true;
-
-    document.getElementById("followButton").textContent =
-      "自動追従：オン";
-
+    document.getElementById("followButton").textContent = "自動追従：オン";
     map.setView(currentLatLng, Math.max(map.getZoom(), 16));
   });
 
-  // 走行軌跡クリア
   document.getElementById("clearRouteButton").addEventListener("click", () => {
     gpsHistory = [];
     routeLine.setLatLngs([]);
   });
 
-  // 走行軌跡オン・オフ
   document.getElementById("routeToggleButton").addEventListener("click", event => {
     routeRecordingEnabled = !routeRecordingEnabled;
-
-    event.currentTarget.textContent =
-      routeRecordingEnabled ? "走行軌跡：オン" : "走行軌跡：オフ";
+    event.currentTarget.textContent = routeRecordingEnabled ? "走行軌跡：オン" : "走行軌跡：オフ";
   });
 
-  // メッセージ入力：4行・1行15文字
+  // メッセージ入力：4行・1行15文字（日本語IME対応）
   const inputBox = document.getElementById("messageInput");
   const sendStatus = document.getElementById("sendStatus");
-
   let isComposing = false;
+
+  // 定型メッセージ：初期セット＋ユーザー追加分をブラウザーに保存
+  const QUICK_MESSAGE_STORAGE_KEY = "endurancePitQuickMessages_v1";
+  const defaultQuickMessages = ["この周でピットイン", "SC中", "FYC 60km", "ピットロード40km"];
+  const quickMessageList = document.getElementById("quickMessageList");
+  let selectedQuickMessage = null;
+  function loadQuickMessages() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(QUICK_MESSAGE_STORAGE_KEY) || "[]");
+      return Array.isArray(saved) ? saved.filter(message => typeof message === "string" && message.trim()).slice(0, 20) : [];
+    } catch (error) { return []; }
+  }
+  let customQuickMessages = loadQuickMessages();
+  function saveQuickMessages() {
+    try { localStorage.setItem(QUICK_MESSAGE_STORAGE_KEY, JSON.stringify(customQuickMessages)); }
+    catch (error) { sendStatus.textContent = "定型文を保存できませんでした"; }
+  }
+  function renderQuickMessages() {
+    quickMessageList.replaceChildren();
+    [...defaultQuickMessages.map(message => ({ message, custom: false })), ...customQuickMessages.map(message => ({ message, custom: true }))].forEach(item => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "quick-message-button" + (item.custom ? " custom" : "");
+      if (selectedQuickMessage === item.message) button.classList.add("selected");
+      button.textContent = item.message;
+      button.setAttribute("aria-pressed", String(selectedQuickMessage === item.message));
+      button.addEventListener("click", () => {
+        selectedQuickMessage = selectedQuickMessage === item.message ? null : item.message;
+        renderQuickMessages();
+      });
+      if (item.custom) {
+        const remove = document.createElement("span");
+        remove.className = "quick-message-remove";
+        remove.textContent = "×";
+        remove.title = "この定型文を削除";
+        remove.setAttribute("role", "button");
+        remove.setAttribute("aria-label", `${item.message}を削除`);
+        remove.addEventListener("click", event => {
+          event.stopPropagation();
+          customQuickMessages = customQuickMessages.filter(message => message !== item.message);
+          if (selectedQuickMessage === item.message) selectedQuickMessage = null;
+          saveQuickMessages();
+          renderQuickMessages();
+        });
+        button.appendChild(remove);
+      }
+      quickMessageList.appendChild(button);
+    });
+  }
+  document.getElementById("addQuickMessageButton").addEventListener("click", () => {
+    const message = window.prompt("追加する定型メッセージを入力してください（4行・1行15文字まで）");
+    if (message === null) return;
+    const normalized = message.trim();
+    if (!normalized) return;
+    if (Array.from(normalized).length > 60 || normalized.split(/\r?\n/).length > 4 || normalized.split(/\r?\n/).some(line => Array.from(line).length > 15)) {
+      window.alert("定型文は4行まで、1行15文字以内で登録してください。");
+      return;
+    }
+    if (defaultQuickMessages.includes(normalized) || customQuickMessages.includes(normalized)) return;
+    if (customQuickMessages.length >= 20) { window.alert("追加できる定型文は20件までです。"); return; }
+    customQuickMessages.push(normalized);
+    saveQuickMessages();
+    renderQuickMessages();
+  });
+  renderQuickMessages();
+
+  document.getElementById("sendButton").addEventListener("click", () => {
+    const manualMessage = inputBox.innerText.replace(/\r/g, "");
+    if (manualMessage.trim()) {
+      sendMessage();
+      return;
+    }
+    if (!selectedQuickMessage) {
+      sendStatus.textContent = "メッセージを入力するか、定型文を選択してください。";
+      sendStatus.style.color = "#fbbf24";
+      return;
+    }
+    sendMessage(selectedQuickMessage);
+  });
 
   function enforceLineAndCharLimit() {
     const original = inputBox.innerText.replace(/\r/g, "");
-
-    let lines = original.split("\n").map(line =>
-      Array.from(line).slice(0, 15).join("")
-    );
-
-    if (lines.length > 4) {
-      lines = lines.slice(0, 4);
-    }
-
+    let lines = original.split("\n").map(line => Array.from(line).slice(0, 15).join(""));
+    if (lines.length > 4) lines = lines.slice(0, 4);
     const limited = lines.join("\n");
-
     if (limited !== original) {
       inputBox.innerText = limited;
-
       const range = document.createRange();
       const selection = window.getSelection();
-
       range.selectNodeContents(inputBox);
       range.collapse(false);
-
       selection.removeAllRanges();
       selection.addRange(range);
     }
   }
+  inputBox.addEventListener("compositionstart", () => { isComposing = true; });
+  inputBox.addEventListener("compositionend", () => { isComposing = false; setTimeout(enforceLineAndCharLimit, 0); });
+  inputBox.addEventListener("input", () => { if (!isComposing) enforceLineAndCharLimit(); });
 
-  inputBox.addEventListener("compositionstart", () => {
-    isComposing = true;
-  });
+  document.getElementById("clearMessageButton").addEventListener("click", clearMessage);
 
-  inputBox.addEventListener("compositionend", () => {
-    isComposing = false;
-    setTimeout(enforceLineAndCharLimit, 0);
-  });
-
-  inputBox.addEventListener("input", () => {
-    if (!isComposing) {
-      enforceLineAndCharLimit();
-    }
-  });
-
-  document.getElementById("sendButton").addEventListener("click", sendMessage);
-
-  // メッセージ送信
-  function sendMessage() {
+  function clearMessage() {
     if (!db) {
       sendStatus.textContent = "Firebaseに接続できていません。";
       sendStatus.style.color = "red";
       return;
     }
+    db.ref("race/message").set({ text: "" })
+      .then(() => {
+        inputBox.innerText = "";
+        sendStatus.textContent = "メッセージをクリアしました（ドライバー画面：メッセージ入力待ち）";
+        sendStatus.style.color = "#b7791f";
+      })
+      .catch(showSendError);
+  }
 
-    const msg = inputBox.innerText.replace(/\r/g, "");
-
-    if (!msg.trim()) {
-      db.ref("race/message").set({ text: "" })
-        .then(() => {
-          sendStatus.textContent = "メッセージ入力待ちを送信しました";
-          sendStatus.style.color = "#b7791f";
-        })
-        .catch(showSendError);
-
+  function sendMessage(messageOverride = null) {
+    if (!db) {
+      sendStatus.textContent = "Firebaseに接続できていません。";
+      sendStatus.style.color = "red";
       return;
     }
-
+    const msg = typeof messageOverride === "string" ? messageOverride : inputBox.innerText.replace(/\r/g, "");
+    if (!msg.trim()) {
+      db.ref("race/message").set({ text: "" })
+        .then(() => { sendStatus.textContent = "メッセージ入力待ちを送信しました"; sendStatus.style.color = "#b7791f"; })
+        .catch(showSendError);
+      return;
+    }
     db.ref("race/message").set({ text: msg })
       .then(() => {
         sendStatus.textContent = "送信完了！";
         sendStatus.style.color = "green";
-
         const li = document.createElement("li");
-
-        li.appendChild(
-          document.createTextNode(`${new Date().toLocaleTimeString()} - ${msg}`)
-        );
-
+        const meta = document.createElement("span");
+        meta.className = "message-meta";
+        meta.textContent = `ピット・${new Date().toLocaleTimeString()}`;
+        const body = document.createElement("span");
+        body.className = "message-body";
+        body.textContent = msg;
+        li.append(meta, body);
         const deleteBtn = document.createElement("button");
         deleteBtn.className = "history-delete";
         deleteBtn.textContent = "削除";
         deleteBtn.type = "button";
-
         deleteBtn.addEventListener("click", () => li.remove());
-
         li.appendChild(deleteBtn);
-
-        document.getElementById("sentMessageList").appendChild(li);
+        const sentList = document.getElementById("sentMessageList");
+        const empty = sentList.querySelector(".conversation-empty");
+        if (empty) empty.remove();
+        sentList.prepend(li);
       })
       .catch(showSendError);
   }
@@ -377,23 +679,18 @@
     sendStatus.style.color = "red";
   }
 
-  // ドライバーからの応答受信
+  // 応答受信：初回表示時の過去応答では通知音を鳴らさない
   const responseList = document.getElementById("responseList");
   const responseNodes = new Map();
 
-  // 通知音オン・オフ
   document.getElementById("soundButton").addEventListener("click", event => {
     soundEnabled = !soundEnabled;
-
-    event.currentTarget.textContent =
-      soundEnabled ? "通知音：オン" : "通知音：オフ";
+    event.currentTarget.textContent = soundEnabled ? "通知音：オン" : "通知音：オフ";
   });
 
   async function playNotifySound() {
     if (!soundEnabled) return;
-
     const sound = document.getElementById("notifySound");
-
     try {
       sound.currentTime = 0;
       await sound.play();
@@ -401,221 +698,127 @@
       console.warn("通知音を再生できませんでした。画面を一度操作してからお試しください。", error);
     }
   }
-
   document.getElementById("testSoundButton").addEventListener("click", playNotifySound);
 
   function renderResponse(key, data, shouldNotify) {
     if (responseNodes.has(key)) return;
-
     const li = document.createElement("li");
-
-    const time = data && data.time
-      ? new Date(data.time).toLocaleTimeString()
-      : "時刻不明";
-
-    const reply = data && data.reply != null
-      ? String(data.reply)
-      : "（空の応答）";
-
-    li.appendChild(
-      document.createTextNode(`${time} - ${reply}`)
-    );
-
+    const time = data && data.time ? new Date(data.time).toLocaleTimeString() : "時刻不明";
+    const reply = data && data.reply != null ? String(data.reply) : "（空の応答）";
+    const meta = document.createElement("span");
+    meta.className = "message-meta";
+    meta.textContent = `ドライバー・${time}`;
+    const body = document.createElement("span");
+    body.className = "message-body";
+    body.textContent = reply;
+    li.append(meta, body);
     const deleteBtn = document.createElement("button");
     deleteBtn.className = "history-delete";
     deleteBtn.textContent = "削除";
     deleteBtn.type = "button";
-
     deleteBtn.addEventListener("click", () => {
-      db.ref("race/response/" + key)
-        .remove()
-        .catch(error => console.error("応答削除失敗:", error));
+      db.ref("race/response/" + key).remove().catch(error => console.error("応答削除失敗:", error));
     });
-
     li.appendChild(deleteBtn);
-    responseList.appendChild(li);
+    const empty = responseList.querySelector(".conversation-empty");
+    if (empty) empty.remove();
+    responseList.prepend(li);
     responseNodes.set(key, li);
-
-    if (shouldNotify) {
-      playNotifySound();
-    }
+    if (shouldNotify) playNotifySound();
   }
 
-  // GPS受信
-  // Firebase race/gps = { lat, lng, accuracy? }
+  // GPS受信データ形式：race/gps = { lat, lng, accuracy? }
   function receiveGps(snapshot) {
     const gps = snapshot.val();
-
     if (!gps) return;
-
     const lat = Number(gps.lat);
     const lng = Number(gps.lng);
-
-    if (
-      !Number.isFinite(lat) ||
-      !Number.isFinite(lng) ||
-      lat < -90 ||
-      lat > 90 ||
-      lng < -180 ||
-      lng > 180
-    ) {
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
       console.warn("不正なGPSデータ:", gps);
       return;
     }
 
     const point = L.latLng(lat, lng);
-
     currentLatLng = point;
     lastGpsTime = Date.now();
 
     document.getElementById("gpsLat").textContent = lat.toFixed(6);
     document.getElementById("gpsLng").textContent = lng.toFixed(6);
+    document.getElementById("gpsReceivedAt").textContent = new Date(lastGpsTime).toLocaleTimeString();
 
-    document.getElementById("gpsReceivedAt").textContent =
-      new Date(lastGpsTime).toLocaleTimeString();
-
-    // GPS精度表示
     const accuracy = Number(gps.accuracy);
-
-    if (
-      Number.isFinite(accuracy) &&
-      accuracy >= 0 &&
-      accuracy <= 10000
-    ) {
-      document.getElementById("gpsAccuracy").textContent =
-        `${Math.round(accuracy)} m`;
-
-      accuracyCircle
-        .setLatLng(point)
-        .setRadius(accuracy)
-        .setStyle({
-          opacity: 1,
-          fillOpacity: 0.12
-        });
+    if (Number.isFinite(accuracy) && accuracy >= 0 && accuracy <= 10000) {
+      document.getElementById("gpsAccuracy").textContent = `${Math.round(accuracy)} m`;
+      accuracyCircle.setLatLng(point).setRadius(accuracy).setStyle({ opacity: 1, fillOpacity: 0.12 });
     } else {
       document.getElementById("gpsAccuracy").textContent = "未送信";
-
-      accuracyCircle.setStyle({
-        opacity: 0,
-        fillOpacity: 0
-      });
+      accuracyCircle.setStyle({ opacity: 0, fillOpacity: 0 });
     }
 
-    // GPS受信状態
     const status = document.getElementById("gpsStatus");
-
     status.textContent = "● GPS受信中";
     status.className = "received";
-
-    // 車両マーカー更新
     carMarker.setLatLng(point);
 
-    // 走行軌跡の記録
-    // オフの場合は新しい軌跡を記録しない
     if (routeRecordingEnabled) {
-      const previous = gpsHistory.length
-        ? gpsHistory[gpsHistory.length - 1]
-        : null;
-
-      // 1.5m以上移動した場合だけ記録
+      const previous = gpsHistory.length ? gpsHistory[gpsHistory.length - 1] : null;
       if (!previous || map.distance(previous, point) >= 1.5) {
         gpsHistory.push(point);
-
-        if (gpsHistory.length > MAX_HISTORY) {
-          gpsHistory.shift();
-        }
-
+        if (gpsHistory.length > MAX_HISTORY) gpsHistory.shift();
         routeLine.setLatLngs(gpsHistory);
       }
     }
 
-    // 地図の自動追従
-    if (followEnabled) {
-      map.panTo(point, {
-        animate: true,
-        duration: 0.45
-      });
-    }
+    if (followEnabled) map.panTo(point, { animate: true, duration: 0.45 });
   }
 
   // Firebase接続
   try {
-    if (!firebase || !firebase.apps) {
-      throw new Error("Firebase SDKを読み込めませんでした。");
-    }
-
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
-
+    if (!firebase || !firebase.apps) throw new Error("Firebase SDKを読み込めませんでした。");
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     db = firebase.database();
 
-    // 応答初期表示
     let responseBootstrap = true;
-
     db.ref("race/response").on("child_added", snapshot => {
-      renderResponse(
-        snapshot.key,
-        snapshot.val(),
-        !responseBootstrap
-      );
+      renderResponse(snapshot.key, snapshot.val(), !responseBootstrap);
     });
-
     db.ref("race/response").once("value")
-      .then(() => {
-        responseBootstrap = false;
-      })
-      .catch(error => {
-        responseBootstrap = false;
-        console.error("応答初期確認エラー:", error);
-      });
+      .then(() => { responseBootstrap = false; })
+      .catch(error => { responseBootstrap = false; console.error("応答初期確認エラー:", error); });
 
     db.ref("race/response").on("child_removed", snapshot => {
       const node = responseNodes.get(snapshot.key);
-
-      if (node) {
-        node.remove();
-      }
-
+      if (node) node.remove();
       responseNodes.delete(snapshot.key);
+      if (!responseList.children.length) {
+        const empty = document.createElement("li");
+        empty.className = "conversation-empty";
+        empty.textContent = "ドライバーからの返信待ち";
+        responseList.appendChild(empty);
+      }
     });
 
-    // GPS受信監視
     db.ref("race/gps").on("value", receiveGps, error => {
       console.error("GPS受信エラー:", error);
-
       const status = document.getElementById("gpsStatus");
-
       status.textContent = "⚠ GPS受信エラー";
       status.className = "lost";
     });
-
   } catch (error) {
     console.error("Firebase初期化エラー:", error);
-
-    sendStatus.textContent =
-      "Firebase初期化失敗：" + error.message;
-
+    sendStatus.textContent = "Firebase初期化失敗：" + error.message;
     sendStatus.style.color = "red";
-
-    document.getElementById("gpsStatus").textContent =
-      "Firebase接続エラー";
-
+    document.getElementById("gpsStatus").textContent = "Firebase接続エラー";
     document.getElementById("gpsStatus").className = "lost";
   }
 
   // 15秒以上GPS更新がなければ警告
   setInterval(() => {
     const status = document.getElementById("gpsStatus");
-
     if (!lastGpsTime) return;
-
     const elapsed = Date.now() - lastGpsTime;
-
     if (elapsed > GPS_TIMEOUT_MS) {
-      status.textContent =
-        `⚠ GPS受信停止（最終受信から ${Math.floor(elapsed / 1000)} 秒）`;
-
+      status.textContent = `⚠ GPS受信停止（最終受信から ${Math.floor(elapsed / 1000)} 秒）`;
       status.className = "lost";
     } else {
       status.textContent = "● GPS受信中";
@@ -623,9 +826,7 @@
     }
   }, 1000);
 
-  // 地図サイズ調整
   setTimeout(() => map.invalidateSize(), 500);
-
 </script>
 </body>
 </html>
