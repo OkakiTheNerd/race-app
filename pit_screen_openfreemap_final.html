@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f3f5f7">
+  <title>ピット画面 - GPSモニター</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@6.3.0/dist/maplibre-gl.css">
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 14px; background: #f3f5f7; color: #17212b; font-family: system-ui, sans-serif; }
+    main { max-width: 1500px; margin: auto; }
+    h1 { font-size: clamp(22px, 3vw, 30px); margin: 0 0 14px; }
+    h2 { font-size: 19px; margin: 0 0 12px; }
+    h3 { font-size: 16px; margin: 16px 0 8px; }
+    .panel { margin: 14px 0; padding: 16px; background: white; border: 1px solid #d7dde3; border-radius: 12px; box-shadow: 0 2px 8px #1423320d; }
+    #messageInput { width: 100%; max-width: 900px; min-height: 190px; padding: 14px; border: 2px solid #333; border-radius: 10px; background: white; font-size: clamp(28px, 4vw, 48px); line-height: 1.35; text-align: center; white-space: pre-wrap; overflow-wrap: anywhere; overflow-y: auto; outline: none; }
+    #messageInput:focus { border-color: #1769aa; box-shadow: 0 0 0 3px #1769aa24; }
+    button, select { min-height: 42px; margin: 5px 6px 5px 0; padding: 8px 14px; border: 1px solid #9aa7b3; border-radius: 8px; background: #f8fafc; color: #17212b; font-size: 15px; cursor: pointer; }
+    button.primary { color: white; background: #155e9a; border-color: #155e9a; font-weight: 700; }
+    #sendStatus { display: inline-block; min-height: 1.5em; margin-top: 8px; font-weight: 700; }
+    ul { padding-left: 24px; margin: 8px 0 0; }
+    li { margin: 8px 0; overflow-wrap: anywhere; }
+    .history-delete { min-height: 30px; padding: 3px 9px; margin-left: 10px; font-size: 13px; }
+    .map-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .map-toolbar label { font-weight: 700; }
+    .map-toolbar select { min-width: 190px; }
+    #map { width: 100%; height: min(72vh, 760px); min-height: 420px; margin-top: 12px; border: 2px solid #29343e; border-radius: 10px; overflow: hidden; background: #e7edf1; }
+    #gpsStatus { display: inline-block; margin: 8px 0; padding: 7px 11px; border-radius: 7px; background: #eef2f5; color: #4c5965; font-weight: 800; }
+    #gpsStatus.received { background: #e6f6eb; color: #126b32; }
+    #gpsStatus.lost { background: #fff0ed; color: #b42318; }
+    .gps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; margin-top: 8px; }
+    .gps-value { padding: 10px; border: 1px solid #e0e5e9; border-radius: 8px; background: #fafbfc; }
+    .gps-value small { display: block; color: #596775; font-size: 12px; }
+    .gps-value strong { display: block; margin-top: 3px; font-size: 17px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+    .hint { color: #5b6874; font-size: 13px; line-height: 1.55; }
+    .map-error { padding: 12px; color: #9f241b; background: #fff0ed; border-radius: 8px; }
+    @media (max-width: 650px) { body { padding: 8px; } .panel { padding: 12px; } #map { min-height: 360px; height: 60vh; } #messageInput { min-height: 150px; } }
+  </style>
+</head>
+<body>
+<main>
+  <h1>ピット画面</h1>
+
+  <section class="panel">
+    <h2>ドライバーへのメッセージ（4行まで・1行15文字）</h2>
+    <div id="messageInput" contenteditable="true" role="textbox" aria-label="ドライバーへのメッセージ" aria-multiline="true"></div>
+    <div><button class="primary" id="sendButton" type="button">送信</button><span id="sendStatus" aria-live="polite"></span></div>
+    <h3>送信履歴</h3>
+    <ul id="sentMessageList"></ul>
+  </section>
+
+  <section class="panel">
+    <h2>ドライバーからの応答</h2>
+    <ul id="responseList"></ul>
+    <audio id="notifySound" src="notify.mp3" preload="auto"></audio>
+    <div>
+      <button id="soundButton" type="button">通知音：オン</button>
+      <button id="testSoundButton" type="button">音を鳴らすテスト</button>
+    </div>
+    <p class="hint">通知音を使う場合は notify.mp3 をHTMLと同じフォルダーに置いてください。ブラウザーで最初に操作した後に再生できます。</p>
+  </section>
+
+  <section class="panel">
+    <h2>ドライバーGPS・コースマップ</h2>
+    <div class="map-toolbar">
+      <label for="circuitSelect">サーキット</label>
+      <select id="circuitSelect">
+        <option value="ebisu">エビス東コース</option>
+        <option value="tsukuba">筑波サーキット（コース2000）</option>
+      </select>
+      <button id="followButton" type="button">自動追従：オン</button>
+      <button id="returnButton" type="button">車両位置へ戻る</button>
+      <button id="clearRouteButton" type="button">走行軌跡をクリア</button>
+    </div>
+    <div id="gpsStatus" role="status" aria-live="polite">GPS受信待ち</div>
+    <div class="gps-grid">
+      <div class="gps-value"><small>緯度</small><strong id="gpsLat">---</strong></div>
+      <div class="gps-value"><small>経度</small><strong id="gpsLng">---</strong></div>
+      <div class="gps-value"><small>測位精度</small><strong id="gpsAccuracy">---</strong></div>
+      <div class="gps-value"><small>最終受信</small><strong id="gpsReceivedAt">---</strong></div>
+    </div>
+    <div id="map" aria-label="車両GPS位置マップ"></div>
+    <p class="hint">地図：OpenFreeMap Liberty / OpenMapTiles / OpenStreetMap。地図表示にはインターネット接続が必要です。OpenFreeMapの公開インスタンスは無料ですが、稼働保証（SLA）はありません。</p>
+    <p id="mapError" class="map-error" hidden></p>
+  </section>
+</main>
+
+<!-- 元のFirebase設定・Realtime Databaseを継続利用 -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<!-- LeafletとMapLibre GL Leaflet連携のブラウザー用ESM設定 -->
+<script type="importmap">
+{
+  "imports": {
+    "leaflet": "https://unpkg.com/leaflet@1.9.4/dist/leaflet-src.esm.js",
+    "maplibre-gl": "https://unpkg.com/maplibre-gl@6.3.0/dist/maplibre-gl.mjs"
+  }
+}
+</script>
+
+<script type="module">
+  import * as L from "leaflet";
+  import { maplibreGL } from "https://unpkg.com/@maplibre/maplibre-gl-leaflet@0.1.4/dist/leaflet-maplibre-gl.mjs";
+
+  const firebase = window.firebase;
+  const firebaseConfig = {
+    apiKey: "AIzaSyCcNVldAlyQ7p7ZynrVzraZdiY3WCQCi8P",
+    authDomain: "race-app-76da9.firebaseapp.com",
+    databaseURL: "https://race-app-76da9-default-rtdb.firebaseio.com",
+    projectId: "race-app-76da9",
+    storageBucket: "race-app-76da9.appspot.com",
+    messagingSenderId: "574674480250",
+    appId: "1:574674480250:web:6eba73435182cb053d1fc3"
+  };
+
+  const circuits = {
+    ebisu: { name: "エビス東コース", center: [37.644224, 140.372278], zoom: 16 },
+    tsukuba: { name: "筑波サーキット（コース2000）", center: [36.150845, 139.919699], zoom: 16 }
+  };
+
+  let db = null;
+  let soundEnabled = true;
+  let followEnabled = true;
+  let currentLatLng = null;
+  let lastGpsTime = null;
+  let gpsHistory = [];
+  const MAX_HISTORY = 1200;
+  const GPS_TIMEOUT_MS = 15000;
+
+  const mapError = document.getElementById("mapError");
+  const map = L.map("map", {
+    zoomControl: true,
+    preferCanvas: true,
+    minZoom: 1,
+    maxBounds: [[-85, -Infinity], [85, Infinity]],
+    maxBoundsViscosity: 1
+  }).setView(circuits.ebisu.center, circuits.ebisu.zoom);
+
+  try {
+    maplibreGL({
+      style: "https://tiles.openfreemap.org/styles/liberty"
+    }).addTo(map);
+  } catch (error) {
+    console.error("OpenFreeMap初期化エラー:", error);
+    mapError.hidden = false;
+    mapError.textContent = "地図を初期化できませんでした。インターネット接続とCDNへのアクセスを確認してください。";
+  }
+
+  const carMarker = L.circleMarker(circuits.ebisu.center, {
+    radius: 10, color: "#fff", weight: 3, fillColor: "#e11d48", fillOpacity: 1
+  }).addTo(map).bindTooltip("ドライバー位置", { direction: "top" });
+
+  const accuracyCircle = L.circle(circuits.ebisu.center, {
+    radius: 0, color: "#2563eb", weight: 1, fillColor: "#3b82f6", fillOpacity: 0.12
+  }).addTo(map);
+
+  const routeLine = L.polyline([], {
+    color: "#e11d48", weight: 4, opacity: 0.85, lineCap: "round", lineJoin: "round"
+  }).addTo(map);
+
+  document.getElementById("circuitSelect").addEventListener("change", event => {
+    const circuit = circuits[event.target.value];
+    if (!circuit) return;
+    map.setView(circuit.center, circuit.zoom);
+    if (followEnabled && currentLatLng) map.panTo(currentLatLng);
+  });
+
+  document.getElementById("followButton").addEventListener("click", () => {
+    followEnabled = !followEnabled;
+    document.getElementById("followButton").textContent = followEnabled ? "自動追従：オン" : "自動追従：オフ";
+    if (followEnabled && currentLatLng) map.panTo(currentLatLng);
+  });
+
+  document.getElementById("returnButton").addEventListener("click", () => {
+    if (!currentLatLng) return alert("まだGPSを受信していません。");
+    followEnabled = true;
+    document.getElementById("followButton").textContent = "自動追従：オン";
+    map.setView(currentLatLng, Math.max(map.getZoom(), 16));
+  });
+
+  document.getElementById("clearRouteButton").addEventListener("click", () => {
+    gpsHistory = [];
+    routeLine.setLatLngs([]);
+  });
+
+  // メッセージ入力：4行・1行15文字（日本語IME対応）
+  const inputBox = document.getElementById("messageInput");
+  const sendStatus = document.getElementById("sendStatus");
+  let isComposing = false;
+
+  function enforceLineAndCharLimit() {
+    const original = inputBox.innerText.replace(/\r/g, "");
+    let lines = original.split("\n").map(line => Array.from(line).slice(0, 15).join(""));
+    if (lines.length > 4) lines = lines.slice(0, 4);
+    const limited = lines.join("\n");
+    if (limited !== original) {
+      inputBox.innerText = limited;
+      const range = document.createRange();
+      const selection = window.getSelection();
+      range.selectNodeContents(inputBox);
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+  }
+  inputBox.addEventListener("compositionstart", () => { isComposing = true; });
+  inputBox.addEventListener("compositionend", () => { isComposing = false; setTimeout(enforceLineAndCharLimit, 0); });
+  inputBox.addEventListener("input", () => { if (!isComposing) enforceLineAndCharLimit(); });
+
+  document.getElementById("sendButton").addEventListener("click", sendMessage);
+
+  function sendMessage() {
+    if (!db) {
+      sendStatus.textContent = "Firebaseに接続できていません。";
+      sendStatus.style.color = "red";
+      return;
+    }
+    const msg = inputBox.innerText.replace(/\r/g, "");
+    if (!msg.trim()) {
+      db.ref("race/message").set({ text: "" })
+        .then(() => { sendStatus.textContent = "メッセージ入力待ちを送信しました"; sendStatus.style.color = "#b7791f"; })
+        .catch(showSendError);
+      return;
+    }
+    db.ref("race/message").set({ text: msg })
+      .then(() => {
+        sendStatus.textContent = "送信完了！";
+        sendStatus.style.color = "green";
+        const li = document.createElement("li");
+        li.appendChild(document.createTextNode(`${new Date().toLocaleTimeString()} - ${msg}`));
+        const deleteBtn = document.createElement("button");
+        deleteBtn.className = "history-delete";
+        deleteBtn.textContent = "削除";
+        deleteBtn.type = "button";
+        deleteBtn.addEventListener("click", () => li.remove());
+        li.appendChild(deleteBtn);
+        document.getElementById("sentMessageList").appendChild(li);
+      })
+      .catch(showSendError);
+  }
+
+  function showSendError(error) {
+    sendStatus.textContent = "送信失敗：" + error.message;
+    sendStatus.style.color = "red";
+  }
+
+  // 応答受信：初回表示時の過去応答では通知音を鳴らさない
+  const responseList = document.getElementById("responseList");
+  const responseNodes = new Map();
+
+  document.getElementById("soundButton").addEventListener("click", event => {
+    soundEnabled = !soundEnabled;
+    event.currentTarget.textContent = soundEnabled ? "通知音：オン" : "通知音：オフ";
+  });
+
+  async function playNotifySound() {
+    if (!soundEnabled) return;
+    const sound = document.getElementById("notifySound");
+    try {
+      sound.currentTime = 0;
+      await sound.play();
+    } catch (error) {
+      console.warn("通知音を再生できませんでした。画面を一度操作してからお試しください。", error);
+    }
+  }
+  document.getElementById("testSoundButton").addEventListener("click", playNotifySound);
+
+  function renderResponse(key, data, shouldNotify) {
+    if (responseNodes.has(key)) return;
+    const li = document.createElement("li");
+    const time = data && data.time ? new Date(data.time).toLocaleTimeString() : "時刻不明";
+    const reply = data && data.reply != null ? String(data.reply) : "（空の応答）";
+    li.appendChild(document.createTextNode(`${time} - ${reply}`));
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "history-delete";
+    deleteBtn.textContent = "削除";
+    deleteBtn.type = "button";
+    deleteBtn.addEventListener("click", () => {
+      db.ref("race/response/" + key).remove().catch(error => console.error("応答削除失敗:", error));
+    });
+    li.appendChild(deleteBtn);
+    responseList.appendChild(li);
+    responseNodes.set(key, li);
+    if (shouldNotify) playNotifySound();
+  }
+
+  // GPS受信データ形式：race/gps = { lat, lng, accuracy? }
+  function receiveGps(snapshot) {
+    const gps = snapshot.val();
+    if (!gps) return;
+    const lat = Number(gps.lat);
+    const lng = Number(gps.lng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      console.warn("不正なGPSデータ:", gps);
+      return;
+    }
+
+    const point = L.latLng(lat, lng);
+    currentLatLng = point;
+    lastGpsTime = Date.now();
+
+    document.getElementById("gpsLat").textContent = lat.toFixed(6);
+    document.getElementById("gpsLng").textContent = lng.toFixed(6);
+    document.getElementById("gpsReceivedAt").textContent = new Date(lastGpsTime).toLocaleTimeString();
+
+    const accuracy = Number(gps.accuracy);
+    if (Number.isFinite(accuracy) && accuracy >= 0 && accuracy <= 10000) {
+      document.getElementById("gpsAccuracy").textContent = `${Math.round(accuracy)} m`;
+      accuracyCircle.setLatLng(point).setRadius(accuracy).setStyle({ opacity: 1, fillOpacity: 0.12 });
+    } else {
+      document.getElementById("gpsAccuracy").textContent = "未送信";
+      accuracyCircle.setStyle({ opacity: 0, fillOpacity: 0 });
+    }
+
+    const status = document.getElementById("gpsStatus");
+    status.textContent = "● GPS受信中";
+    status.className = "received";
+    carMarker.setLatLng(point);
+
+    const previous = gpsHistory.length ? gpsHistory[gpsHistory.length - 1] : null;
+    if (!previous || map.distance(previous, point) >= 1.5) {
+      gpsHistory.push(point);
+      if (gpsHistory.length > MAX_HISTORY) gpsHistory.shift();
+      routeLine.setLatLngs(gpsHistory);
+    }
+
+    if (followEnabled) map.panTo(point, { animate: true, duration: 0.45 });
+  }
+
+  // Firebase接続
+  try {
+    if (!firebase || !firebase.apps) throw new Error("Firebase SDKを読み込めませんでした。");
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    db = firebase.database();
+
+    let responseBootstrap = true;
+    db.ref("race/response").on("child_added", snapshot => {
+      renderResponse(snapshot.key, snapshot.val(), !responseBootstrap);
+    });
+    db.ref("race/response").once("value")
+      .then(() => { responseBootstrap = false; })
+      .catch(error => { responseBootstrap = false; console.error("応答初期確認エラー:", error); });
+
+    db.ref("race/response").on("child_removed", snapshot => {
+      const node = responseNodes.get(snapshot.key);
+      if (node) node.remove();
+      responseNodes.delete(snapshot.key);
+    });
+
+    db.ref("race/gps").on("value", receiveGps, error => {
+      console.error("GPS受信エラー:", error);
+      const status = document.getElementById("gpsStatus");
+      status.textContent = "⚠ GPS受信エラー";
+      status.className = "lost";
+    });
+  } catch (error) {
+    console.error("Firebase初期化エラー:", error);
+    sendStatus.textContent = "Firebase初期化失敗：" + error.message;
+    sendStatus.style.color = "red";
+    document.getElementById("gpsStatus").textContent = "Firebase接続エラー";
+    document.getElementById("gpsStatus").className = "lost";
+  }
+
+  // 15秒以上GPS更新がなければ警告
+  setInterval(() => {
+    const status = document.getElementById("gpsStatus");
+    if (!lastGpsTime) return;
+    const elapsed = Date.now() - lastGpsTime;
+    if (elapsed > GPS_TIMEOUT_MS) {
+      status.textContent = `⚠ GPS受信停止（最終受信から ${Math.floor(elapsed / 1000)} 秒）`;
+      status.className = "lost";
+    } else {
+      status.textContent = "● GPS受信中";
+      status.className = "received";
+    }
+  }, 1000);
+
+  setTimeout(() => map.invalidateSize(), 500);
+</script>
+</body>
+</html>
